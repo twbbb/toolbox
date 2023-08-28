@@ -1,4 +1,4 @@
-package aesutil
+package aes
 
 import (
 	"bytes"

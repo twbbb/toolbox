@@ -1,4 +1,4 @@
-module git.woa.com/th-go/toolbox/bloom
+module git.woa.com/th-go/toolbox/filter/httpproxy
 
 go 1.18
 

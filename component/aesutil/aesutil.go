@@ -5,19 +5,71 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"encoding/base64"
+	"errors"
+	"fmt"
 	"io"
 	"log"
 )
 
+// AesEncryptStr aes加密
+func AesEncryptStr(orig string, aesKey string) (string, error) {
+	iv, err := GetIv()
+	if err != nil {
+		return "", err
+	}
+
+	defer func() {
+		recoverErr := recover()
+		if recoverErr != nil {
+			err = fmt.Errorf("panic occurred: %v", recoverErr)
+		}
+	}()
+	ucode, err := AesEncrypt(orig, iv, aesKey)
+	if err != nil || ucode == nil || len(ucode) == 0 {
+		return "", errors.New("加密失败")
+	}
+	data := append(iv, ucode...)
+	dataStr := base64.StdEncoding.EncodeToString(data)
+
+	return dataStr, nil
+}
+
+// AesDecryptStr aes解密
+func AesDecryptStr(ucode string, aesKey string) (string, error) {
+	UcodeByte, err := base64.StdEncoding.DecodeString(ucode)
+	if err != nil {
+		return "", err
+	}
+	if len(UcodeByte) <= aes.BlockSize {
+		return "", errors.New("参数异常")
+	}
+	iv := UcodeByte[:aes.BlockSize]
+	data := UcodeByte[aes.BlockSize:]
+	defer func() {
+		recoverErr := recover()
+		if recoverErr != nil {
+			err = fmt.Errorf("panic occurred: %v", recoverErr)
+		}
+	}()
+	// 解密
+	ucodeInfoStr, err := AesDecrypt(data, iv, aesKey)
+	if err != nil {
+		return "", err
+	}
+	return ucodeInfoStr, nil
+}
+
 // AesEncrypt 加密
-func AesEncrypt(orig string, ivByte []byte, aesKey string) []byte {
+func AesEncrypt(orig string, ivByte []byte, aesKey string) ([]byte, error) {
+
 	if orig == "" {
-		return nil
+		return nil, nil
 	}
 	block, err := aes.NewCipher([]byte(aesKey))
 	if err != nil {
 		log.Println("Error creating AES cipher:", err)
-		return nil
+		return nil, err
 	}
 	// 转成字节数组
 	origData := []byte(orig)
@@ -31,15 +83,15 @@ func AesEncrypt(orig string, ivByte []byte, aesKey string) []byte {
 	cryted := make([]byte, len(origData))
 	// 加密
 	blockMode.CryptBlocks(cryted, origData)
-	return cryted
+	return cryted, nil
 }
 
 // AesDecrypt 解密
-func AesDecrypt(crytedByte, ivByte []byte, aesKey string) string {
+func AesDecrypt(crytedByte, ivByte []byte, aesKey string) (string, error) {
 	block, err := aes.NewCipher([]byte(aesKey))
 	if err != nil {
 		log.Println("Error creating AES cipher:", err)
-		return ""
+		return "", err
 	}
 	// 加密模式
 	blockMode := cipher.NewCBCDecrypter(block, ivByte)
@@ -49,7 +101,7 @@ func AesDecrypt(crytedByte, ivByte []byte, aesKey string) string {
 	blockMode.CryptBlocks(orig, crytedByte)
 	// 去补全码
 	orig = PKCS7UnPadding(orig)
-	return string(orig)
+	return string(orig), nil
 }
 
 // GetIv 获取随机值

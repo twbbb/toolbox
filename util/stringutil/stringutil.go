@@ -70,3 +70,28 @@ func IntToString(n interface{}, defaultValue string) string {
 		return defaultValue
 	}
 }
+
+// GetPhoneMaskStr 获取脱敏数据
+func GetPhoneMaskStr(phoneNumber string) string {
+
+	runes := []rune(phoneNumber)
+	runesLen := len(runes)
+	if runesLen <= 1 {
+		return phoneNumber
+	}
+	// 11位长度手机号
+	if runesLen == 11 {
+		masked := []rune(phoneNumber)
+		for i := 3; i < 7; i++ {
+			masked[i] = '*'
+		}
+		return string(masked)
+	}
+
+	// 截取一半显示
+	showLen := runesLen * 1 / 2
+	showRune := runes[0:showLen]
+	showStr := string(showRune)
+	maskStr := showStr + strings.Repeat("*", runesLen-showLen)
+	return maskStr
+}

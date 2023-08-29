@@ -19,36 +19,24 @@ import (
 	"git.code.oa.com/trpc-go/trpc-go/filter"
 )
 
-// 本地路径，请求参数和结果会存储在这里，下次相同参数可以直接用本地文件
-var filePath = "/Users/tianwenbin/Documents/workspacejggl/jgglgo/medical_org_mgr/filters/request/"
-
-// trpc内网请求地址
-var baseTrpcUrl = "https://proxy.th.woa.com/pretrpcapi"
-
-// 鉴权openid
-var openid = "ooJQ34_lrbyQ-zo92AoqoPvkoTk4"
-
-// var filePath = "/Users/tianwenbin/Documents/workspacejggl/jgglgo/medical_org_mgr/filters/foramlrequest/"
-// var baseTrpcUrl = "https://proxy.th.woa.com/formaltrpcapi"
-
-// trpc网关service名字和北极星名字映射关系
-var serviceMap = map[string]string{
-	"trpc.physical.pkg_server.Api":                            "InnerPkgServer",
-	"trpc.dmp.readserver.DmpBaseRead":                         "westianTest",
-	"trpc.tencent_health.th_coupon_server.BackTHCouponServer": "THCouponServer",
-	"trpc.thuser.crowdruleserver.THCrowdRuleServer":           "crowd_rule_server",
-	"trpc.physical.consumer_access.ServiceIntf":               "InnerConsumerAccessServer",
+// HttpProxyArg 代理的参数
+type HttpProxyArg struct {
+	LocalFilePath string            // 本地路径，请求参数和结果会存储在这里，下次相同参数可以直接用本地文件,如："/Users/tianwenbin/Documents/workspacejggl/jgglgo/"
+	BaseTrpcUrl   string            // trpc内网请求地址 如：https://proxy.th.woa.com/pretrpcapi
+	Openid        string            // 内网鉴权openid 如：ooJQ34_lrbyQ-zo92AoqoPvkoXXX
+	ServiceMap    map[string]string // trpc网关service名字和北极星名字映射关系，如："trpc.thuser.crowdruleserver.THCrowdRuleServer": "crowd_rule_server"
+	Cookie        string            // woa的cookie
 }
 
-var cookie = ""
+var httpProxyArg HttpProxyArg
 
 // Init 初始化
-func Init(filePathInit, baseTrpcUrlInit, openidInit, cookieInit string, serviceMapInit map[string]string) {
-	filePath = filePathInit
-	baseTrpcUrl = baseTrpcUrlInit
-	openid = openidInit
-	serviceMap = serviceMapInit
-	cookie = cookieInit
+func Init(arg HttpProxyArg) {
+	runInLocal := os.Getenv("DOCKER_ENV") == ""
+	if !runInLocal {
+		return
+	}
+	httpProxyArg = arg
 	filter.Register("clientProxy", filter.NoopClientFilter, clientProxy())
 
 }
@@ -68,29 +56,29 @@ func httpRequest(servieName string, method string, req []byte) (bool, []byte, er
 
 	fileReqName := servieName + md5Str + "Req"
 	fileRspName := servieName + md5Str + "Rsp"
-	exists, err := exists(filePath + fileRspName)
-	_, ok := serviceMap[servieName]
+	exists, err := exists(httpProxyArg.LocalFilePath + fileRspName)
+	_, ok := httpProxyArg.ServiceMap[servieName]
 	if !ok {
 		return false, nil, nil
 	}
 	requestFlag := true
-	url := fmt.Sprintf("%s/%s/%s", baseTrpcUrl, serviceMap[servieName], method)
+	url := fmt.Sprintf("%s/%s/%s", httpProxyArg.BaseTrpcUrl, httpProxyArg.ServiceMap[servieName], method)
 	if err != nil {
 		return requestFlag, nil, err
 	}
 	if exists {
-		data, err := ioutil.ReadFile(filePath + fileRspName)
+		data, err := ioutil.ReadFile(httpProxyArg.LocalFilePath + fileRspName)
 		return requestFlag, data, err
 	} else {
 		rsp, err := sendrequest(url, req)
 		if err != nil {
 			return requestFlag, nil, err
 		}
-		err = ioutil.WriteFile(filePath+fileReqName, req, 0644)
+		err = ioutil.WriteFile(httpProxyArg.LocalFilePath+fileReqName, req, 0644)
 		if err != nil {
 			return requestFlag, nil, err
 		}
-		err = ioutil.WriteFile(filePath+fileRspName, rsp, 0644)
+		err = ioutil.WriteFile(httpProxyArg.LocalFilePath+fileRspName, rsp, 0644)
 		if err != nil {
 			return requestFlag, nil, err
 		}
@@ -110,12 +98,12 @@ func sendrequest(url string, req []byte) ([]byte, error) {
 	request.Header.Set("businessid", "tencent-health-mini-qq")
 	request.Header.Set("Th-Auth-Type", "tencent-health-mini")
 	request.Header.Set("Th-Appid", "wxb032bc789053daf4")
-	request.Header.Set("Th-Auto-Openid", openid)
+	request.Header.Set("Th-Auto-Openid", httpProxyArg.Openid)
 	request.Header.Set("Referer", "http://hlego.woa.com/app/customer_support_server")
 	request.Header.Set("User-Agent", "PostmanRuntime/7.31.0")
 	request.Header.Set("Connection", "keep-alive")
 	request.Header.Set("Accept", "*/*")
-	request.Header.Set("Cookie", cookie)
+	request.Header.Set("Cookie", httpProxyArg.Cookie)
 
 	client := &http.Client{}
 	response, err := client.Do(request)

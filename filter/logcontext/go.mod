@@ -1,4 +1,4 @@
-module git.woa.com/th-go/toolbox/filter/httpproxy
+module git.woa.com/th-go/toolbox/filter/logcontext
 
 go 1.18
 

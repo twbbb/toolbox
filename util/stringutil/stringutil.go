@@ -112,6 +112,11 @@ func IsTimeStringYMDHMS(str string) bool {
 	return IsTimeStringValid(str, "2006-01-02 15:04:05")
 }
 
+// IsTimeStringYMD 检查字符串时间格式
+func IsTimeStringYMD(str string) bool {
+	return IsTimeStringValid(str, "2006-01-02")
+}
+
 // IsTimeStringValid 检查字符串时间格式
 func IsTimeStringValid(timeString, format string) bool {
 	_, err := time.Parse(format, timeString)

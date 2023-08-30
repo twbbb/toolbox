@@ -109,7 +109,7 @@ func CheckMobile(phone string) bool {
 
 // IsTimeStringYMDHMS 检查字符串时间格式
 func IsTimeStringYMDHMS(str string) bool {
-	return IsTimeStringValid("2006-01-02 15:04:05", str)
+	return IsTimeStringValid(str, "2006-01-02 15:04:05")
 }
 
 // IsTimeStringValid 检查字符串时间格式

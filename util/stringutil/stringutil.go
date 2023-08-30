@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // GetFloat64Val 分割并且去掉空的数据
@@ -104,4 +105,18 @@ func CheckMobile(phone string) bool {
 	reg := regexp.MustCompile(regRuler)
 	return reg.MatchString(phone)
 
+}
+
+// IsTimeStringYMDHMS 检查字符串时间格式
+func IsTimeStringYMDHMS(str string) bool {
+	return IsTimeStringValid("2006-01-02 15:04:05", str)
+}
+
+// IsTimeStringValid 检查字符串时间格式
+func IsTimeStringValid(timeString, format string) bool {
+	_, err := time.Parse(format, timeString)
+	if err != nil {
+		return false
+	}
+	return true
 }

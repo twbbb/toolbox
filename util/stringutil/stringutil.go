@@ -3,6 +3,7 @@ package stringutil
 import (
 	"errors"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -94,4 +95,13 @@ func GetPhoneMaskStr(phoneNumber string) string {
 	showStr := string(showRune)
 	maskStr := showStr + strings.Repeat("*", runesLen-showLen)
 	return maskStr
+}
+
+// CheckMobile 检验手机号
+func CheckMobile(phone string) bool {
+	regRuler := `^1[3456789]\d{9}$`
+	// 正则调用规则
+	reg := regexp.MustCompile(regRuler)
+	return reg.MatchString(phone)
+
 }

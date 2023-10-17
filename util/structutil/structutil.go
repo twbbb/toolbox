@@ -1,3 +1,4 @@
+// Package structutil structutil
 package structutil
 
 import "reflect"

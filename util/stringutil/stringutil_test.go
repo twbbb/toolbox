@@ -1,3 +1,4 @@
+// Package stringutil stringutil
 package stringutil
 
 import (

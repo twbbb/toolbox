@@ -1,3 +1,4 @@
+// Package logcontext logcontext
 package logcontext
 
 import (

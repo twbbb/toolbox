@@ -1,3 +1,4 @@
+// Package timeutil timeutil
 package timeutil
 
 import (

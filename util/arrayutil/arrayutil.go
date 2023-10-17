@@ -1,3 +1,4 @@
+// Package arrayutil arrayutil
 package arrayutil
 
 import (

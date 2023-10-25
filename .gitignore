@@ -1,0 +1,6 @@
+/.idea/.gitignore
+/.idea/modules.xml
+/.idea/toolbox.iml
+/.idea/vcs.xml
+/.idea/watcherTasks.xml
+/main.go

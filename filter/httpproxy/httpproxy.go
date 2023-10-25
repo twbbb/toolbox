@@ -3,18 +3,17 @@ package filters
 
 import (
 	"context"
-	"crypto/md5"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
-	"regexp"
 	"strings"
 	"time"
 
 	"git.code.oa.com/trpc-go/trpc-go/log"
+	"git.woa.com/th-go/toolbox/filter/httpproxy/bodyparse"
 
 	"git.code.oa.com/trpc-go/trpc-go/codec"
 	"git.code.oa.com/trpc-go/trpc-go/filter"
@@ -29,6 +28,7 @@ type HttpProxyArg struct {
 	// trpc网关service名字和北极星名字映射关系，如："trpc.thuser.crowdruleserver.THCrowdRuleServer": "crowd_rule_server"
 	ServiceMap map[string]string
 	Cookie     string // woa的cookie
+	BodyParse  bodyparse.BodyParse
 }
 
 var httpProxyArg HttpProxyArg
@@ -39,106 +39,12 @@ func Init(arg HttpProxyArg) {
 	if !runInLocal {
 		return
 	}
+	if arg.BodyParse == nil {
+		arg.BodyParse = bodyparse.GetSimpleBodyParseImpl()
+	}
 	httpProxyArg = arg
 	filter.Register("clientProxy", filter.NoopClientFilter, clientProxy())
 
-}
-
-func httpRequest(servieName string, method string, req []byte) (bool, []byte, error) {
-	reqJsonStr := fmt.Sprintf("%s", req)
-	// 定义正则表达式
-	re := regexp.MustCompile(`(?m)("nonce":\s*")[^"]*(".*"|\s*)(,\s*)?`)
-	reqJsonStr = re.ReplaceAllString(reqJsonStr, `$1$2$3`)
-	re = regexp.MustCompile(`(?m)("timestamp":\s*")[^"]*(".*"|\s*)(,\s*)?`)
-	reqJsonStr = re.ReplaceAllString(reqJsonStr, `$1$2$3`)
-	re = regexp.MustCompile(`(?m)("signature":\s*")[^"]*(".*"|\s*)(,\s*)?`)
-	reqJsonStr = re.ReplaceAllString(reqJsonStr, `$1$2$3`)
-
-	hash := md5.Sum([]byte(reqJsonStr))
-	md5Str := fmt.Sprintf("%x", hash)
-
-	fileReqName := servieName + md5Str + "Req"
-	fileRspName := servieName + md5Str + "Rsp"
-	exists, err := exists(httpProxyArg.LocalFilePath + fileRspName)
-	_, ok := httpProxyArg.ServiceMap[servieName]
-	if !ok {
-		return false, nil, nil
-	}
-	requestFlag := true
-	url := fmt.Sprintf("%s/%s/%s", httpProxyArg.BaseTrpcUrl, httpProxyArg.ServiceMap[servieName], method)
-	if err != nil {
-		return requestFlag, nil, err
-	}
-	if exists {
-		data, err := ioutil.ReadFile(httpProxyArg.LocalFilePath + fileRspName)
-		return requestFlag, data, err
-	} else {
-		rsp, err := sendrequest(url, req)
-		if err != nil {
-			return requestFlag, nil, err
-		}
-		err = ioutil.WriteFile(httpProxyArg.LocalFilePath+fileReqName, req, 0644)
-		if err != nil {
-			return requestFlag, nil, err
-		}
-		err = ioutil.WriteFile(httpProxyArg.LocalFilePath+fileRspName, rsp, 0644)
-		if err != nil {
-			return requestFlag, nil, err
-		}
-		return requestFlag, rsp, err
-	}
-}
-func sendrequest(url string, req []byte) ([]byte, error) {
-
-	reqBody := strings.NewReader(string(req))
-
-	request, err := http.NewRequest("POST", url, reqBody)
-	if err != nil {
-		return nil, err
-	}
-
-	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("businessid", "tencent-health-mini-qq")
-	request.Header.Set("Th-Auth-Type", "tencent-health-mini")
-	request.Header.Set("Th-Appid", "wxb032bc789053daf4")
-	request.Header.Set("Th-Auto-Openid", httpProxyArg.Openid)
-	request.Header.Set("Referer", "http://hlego.woa.com/app/customer_support_server")
-	request.Header.Set("User-Agent", "PostmanRuntime/7.31.0")
-	request.Header.Set("Connection", "keep-alive")
-	request.Header.Set("Accept", "*/*")
-	request.Header.Set("Cookie", httpProxyArg.Cookie)
-
-	client := &http.Client{}
-	response, err := client.Do(request)
-	if err != nil {
-		return nil, err
-	}
-	defer response.Body.Close()
-
-	responseBody, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	if response.StatusCode != 200 {
-		return nil, fmt.Errorf("response.statusCode is %d", response.StatusCode)
-	}
-	if strings.Contains(string(responseBody), "<!DOCTYPE html>") {
-		return nil, fmt.Errorf("coockie失效")
-	}
-
-	return responseBody, nil
-}
-
-func exists(path string) (bool, error) {
-	_, err := os.Stat(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return false, nil
-		}
-		return false, err
-	}
-	return true, nil
 }
 
 // clientProxy 代理请求
@@ -154,16 +60,9 @@ func clientProxy() filter.ClientFilter {
 			method = msg.CalleeMethod()
 
 		}
-		reqJSON, err := json.Marshal(req)
-		// log.Infof("clientProxy start,|%s|%s|%s|", servieName, method, string(reqJSON))
+		reqJSON, err := httpProxyArg.BodyParse.GetReqStr(ctx, req, servieName, method)
 
-		if err != nil {
-			log.Errorf("json.Marshal err|%v|%s|", req, err.Error())
-		}
-
-		reqJSON = []byte(fmt.Sprintf("{ \"request\":%s}", reqJSON))
-
-		requestFlag, httpRsp, err := httpRequest(servieName, method, reqJSON)
+		requestFlag, httpRsp, err := httpRequest(ctx, servieName, method, reqJSON)
 		// 有走http请求
 		if requestFlag {
 			if err != nil {
@@ -180,8 +79,83 @@ func clientProxy() filter.ClientFilter {
 			log.Errorf("clientProxy result|%v|%v|%v|%v", time.Since(begin), servieName, method, err.Error())
 		} else {
 			// log.Infof("clientProxy result|%v|%v|%v|%v", time.Since(begin), servieName, method, rsp)
-
 		}
 		return err
 	}
+}
+
+func httpRequest(ctx context.Context, servieName string, method string, reqJsonStr string) (bool, []byte, error) {
+
+	md5Str := httpProxyArg.BodyParse.GetReqKey(ctx, reqJsonStr)
+	fileReqName := servieName + md5Str + "Req"
+	fileRspName := servieName + md5Str + "Rsp"
+	exists, err := exists(httpProxyArg.LocalFilePath + fileRspName)
+	_, ok := httpProxyArg.ServiceMap[servieName]
+	if !ok {
+		return false, nil, nil
+	}
+	requestFlag := true
+	url := fmt.Sprintf("%s/%s/%s", httpProxyArg.BaseTrpcUrl, httpProxyArg.ServiceMap[servieName], method)
+	if err != nil {
+		return requestFlag, nil, err
+	}
+	if exists {
+		data, err := ioutil.ReadFile(httpProxyArg.LocalFilePath + fileRspName)
+		return requestFlag, data, err
+	} else {
+		rsp, err := sendrequest(ctx, url, reqJsonStr, servieName, method)
+		if err != nil {
+			return requestFlag, nil, err
+		}
+		err = ioutil.WriteFile(httpProxyArg.LocalFilePath+fileReqName, []byte(reqJsonStr), 0644)
+		if err != nil {
+			return requestFlag, nil, err
+		}
+		err = ioutil.WriteFile(httpProxyArg.LocalFilePath+fileRspName, []byte(rsp), 0644)
+		if err != nil {
+			return requestFlag, nil, err
+		}
+		return requestFlag, []byte(rsp), err
+	}
+}
+
+func sendrequest(ctx context.Context, url string, req, servieName, method string) (string, error) {
+
+	reqBody := strings.NewReader(req)
+
+	request, err := http.NewRequest("POST", url, reqBody)
+	if err != nil {
+		return "", err
+	}
+
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("businessid", "tencent-health-mini-qq")
+	request.Header.Set("Th-Auth-Type", "tencent-health-mini")
+	request.Header.Set("Th-Appid", "wxb032bc789053daf4")
+	request.Header.Set("Th-Auto-Openid", httpProxyArg.Openid)
+	request.Header.Set("Referer", "http://hlego.woa.com/app/customer_support_server")
+	request.Header.Set("User-Agent", "PostmanRuntime/7.31.0")
+	request.Header.Set("Connection", "keep-alive")
+	request.Header.Set("Accept", "*/*")
+	request.Header.Set("Cookie", httpProxyArg.Cookie)
+
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		return "", err
+	}
+	defer response.Body.Close()
+
+	return httpProxyArg.BodyParse.GetRspStr(ctx, response, servieName, method)
+}
+
+func exists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
 }

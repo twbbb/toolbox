@@ -34,16 +34,22 @@ type HttpProxyArg struct {
 var httpProxyArg HttpProxyArg
 
 // Init 初始化
-func Init(arg HttpProxyArg) {
+func init() {
 	runInLocal := os.Getenv("DOCKER_ENV") == ""
 	if !runInLocal {
 		return
 	}
+
+	filter.Register("clientProxy", filter.NoopClientFilter, clientProxy())
+
+}
+
+// Init 初始化
+func InitArg(arg HttpProxyArg) {
 	if arg.BodyParse == nil {
 		arg.BodyParse = bodyparse.GetSimpleBodyParseImpl()
 	}
 	httpProxyArg = arg
-	filter.Register("clientProxy", filter.NoopClientFilter, clientProxy())
 
 }
 

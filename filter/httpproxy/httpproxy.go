@@ -96,8 +96,8 @@ func httpRequest(ctx context.Context, servieName string, method string, req inte
 ) {
 
 	md5Str := httpProxyArg.BodyParse.GetReqKey(ctx, req, reqJsonStr)
-	fileReqName := servieName + md5Str + "Req"
-	fileRspName := servieName + md5Str + "Rsp"
+	fileReqName := servieName + method + "Req" + md5Str
+	fileRspName := servieName + method + "Rsp" + md5Str
 	exists, err := exists(httpProxyArg.LocalFilePath + fileRspName)
 	_, ok := httpProxyArg.ServiceMap[servieName]
 	if !ok {

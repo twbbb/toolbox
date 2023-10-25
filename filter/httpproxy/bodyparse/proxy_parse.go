@@ -49,11 +49,10 @@ func (b ProxyBodyParseImpl) GetRspStr(ctx context.Context, response *http.Respon
 	if rspStr == nil {
 		return rsp, nil
 	}
-	result, err := json.Marshal(rspStr)
-	if err != nil {
-		fmt.Println("JSON marshal error:", err)
-		return "", err
+	result, ok := rspStr.(string)
+	if !ok {
+		return rsp, fmt.Errorf("rspStr not string:%+v", rspStr)
 	}
-	return string(result), nil
+	return result, nil
 
 }

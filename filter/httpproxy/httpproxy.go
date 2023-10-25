@@ -22,12 +22,12 @@ import (
 // HttpProxyArg 代理的参数
 type HttpProxyArg struct {
 	// 本地路径，请求参数和结果会存储在这里，下次相同参数可以直接用本地文件,如："/Users/tianwenbin/Documents/workspace"
-	LocalFilePath string
-	BaseTrpcUrl   string // trpc内网请求地址 如：https://proxy.th.woa.com/pretrpcapi
-	Openid        string // 内网鉴权openid 如：ooJQ34_lrbyQ-zo92AoqoPvkoXXX
+	LocalFilePath string `yaml:"localFilePath"`
+	BaseTrpcUrl   string `yaml:"baseTrpcUrl"` // trpc内网请求地址 如：https://proxy.th.woa.com/pretrpcapi
+	Openid        string `yaml:"openid"`      // 内网鉴权openid 如：ooJQ34_lrbyQ-zo92AoqoPvkoXXX
 	// trpc网关service名字和北极星名字映射关系，如："trpc.thuser.crowdruleserver.THCrowdRuleServer": "crowd_rule_server"
-	ServiceMap map[string]string
-	Cookie     string // woa的cookie
+	ServiceMap map[string]string `yaml:"serviceMap"`
+	Cookie     string            `yaml:"cookie"` // woa的cookie
 	BodyParse  bodyparse.BodyParse
 }
 

@@ -36,7 +36,7 @@ func (b ProxyBodyParseImpl) GetRspStr(ctx context.Context, response *http.Respon
 	string, error,
 ) {
 
-	rsp, err := b.SimpleBodyParseImpl.GetReqStr(ctx, response, servieName, method)
+	rsp, err := b.SimpleBodyParseImpl.GetRspStr(ctx, response, servieName, method)
 	if err != nil {
 		return rsp, err
 	}

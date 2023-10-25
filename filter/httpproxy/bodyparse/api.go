@@ -10,7 +10,7 @@ type BodyParse interface {
 	// GetReqStr  获取请求参数
 	GetReqStr(ctx context.Context, req interface{}, servieName, method string) (string, error)
 	// GetReqKey 获取req存储key，本地存储
-	GetReqKey(ctx context.Context, req string) string
+	GetReqKey(ctx context.Context, req interface{}, reqJson string) string
 
 	// GetRspStr  获取响应数据
 	GetRspStr(ctx context.Context, rsp *http.Response, servieName, method string) (string, error)

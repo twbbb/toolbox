@@ -68,7 +68,7 @@ func clientProxy() filter.ClientFilter {
 		}
 		reqJSON, err := httpProxyArg.BodyParse.GetReqStr(ctx, req, servieName, method)
 
-		requestFlag, httpRsp, err := httpRequest(ctx, servieName, method, reqJSON)
+		requestFlag, httpRsp, err := httpRequest(ctx, servieName, method, req, reqJSON)
 		// 有走http请求
 		if requestFlag {
 			if err != nil {
@@ -90,9 +90,12 @@ func clientProxy() filter.ClientFilter {
 	}
 }
 
-func httpRequest(ctx context.Context, servieName string, method string, reqJsonStr string) (bool, []byte, error) {
+func httpRequest(ctx context.Context, servieName string, method string, req interface{}, reqJsonStr string) (
+	bool, []byte,
+	error,
+) {
 
-	md5Str := httpProxyArg.BodyParse.GetReqKey(ctx, reqJsonStr)
+	md5Str := httpProxyArg.BodyParse.GetReqKey(ctx, req, reqJsonStr)
 	fileReqName := servieName + md5Str + "Req"
 	fileRspName := servieName + md5Str + "Rsp"
 	exists, err := exists(httpProxyArg.LocalFilePath + fileRspName)

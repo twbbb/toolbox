@@ -18,7 +18,15 @@ type SimpleBodyParseImpl struct {
 }
 
 // GetReqKey 获取req存储key，本地存储
-func (b SimpleBodyParseImpl) GetReqKey(ctx context.Context, reqJsonStr string) string {
+func (b SimpleBodyParseImpl) GetReqKey(ctx context.Context, req interface{}, reqJsonStr string) string {
+	reqJSON, err := json.Marshal(req)
+
+	if err != nil {
+		log.Errorf("json.Marshal err|%v|%s|", req, err.Error())
+
+	} else {
+		reqJsonStr = string(reqJSON)
+	}
 	// 定义正则表达式
 	re := regexp.MustCompile(`(?m)("nonce":\s*")[^"]*(".*"|\s*)(,\s*)?`)
 	reqJsonStr = re.ReplaceAllString(reqJsonStr, `$1$2$3`)

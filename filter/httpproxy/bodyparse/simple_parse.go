@@ -50,10 +50,9 @@ func (b SimpleBodyParseImpl) GetReqStr(ctx context.Context, req interface{}, ser
 		return "", err
 	}
 
-	reqJSON = []byte(fmt.Sprintf("{ \"request\":%s}", reqJSON))
-	reqJsonStr := fmt.Sprintf("%s", req)
+	reqStr := fmt.Sprintf("{ \"request\":%s}", reqJSON)
 
-	return reqJsonStr, nil
+	return reqStr, nil
 }
 
 // GetRspStr  获取响应数据

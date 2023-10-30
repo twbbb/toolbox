@@ -33,7 +33,7 @@ type HttpProxyArg struct {
 
 var httpProxyArg HttpProxyArg
 
-// Init 初始化
+// init 初始化
 func init() {
 	runInLocal := os.Getenv("DOCKER_ENV") == ""
 	if !runInLocal {
@@ -44,7 +44,7 @@ func init() {
 
 }
 
-// Init 初始化
+// InitArg 初始化
 func InitArg(arg HttpProxyArg) {
 	if arg.BodyParse == nil {
 		arg.BodyParse = bodyparse.GetSimpleBodyParseImpl()

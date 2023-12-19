@@ -19,8 +19,8 @@ var (
 	once            sync.Once
 )
 
-// getBeijingLocation 获取北京时区
-func getBeijingLocation() *time.Location {
+// GetBeijingLocation 获取北京时区
+func GetBeijingLocation() *time.Location {
 	once.Do(
 		func() {
 			var err error
@@ -41,6 +41,6 @@ func BeijingFormat(t time.Time) string {
 		return ""
 	}
 	// 将时间转换为北京时间
-	beijingTime := t.In(getBeijingLocation())
+	beijingTime := t.In(GetBeijingLocation())
 	return beijingTime.Format("2006-01-02 15:04:05")
 }

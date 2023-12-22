@@ -17,6 +17,11 @@ func GetUserID(ctx context.Context) string {
 	return getStrFromCtx(ctx, "userId")
 }
 
+// GetHCUnionId 从context中获取HCUnionId
+func GetHCUnionId(ctx context.Context) string {
+	return getStrFromCtx(ctx, "HCUnionId")
+}
+
 // GetSoid 从context中获取soid
 func GetSoid(ctx context.Context) string {
 	return getStrFromCtx(ctx, "soid")

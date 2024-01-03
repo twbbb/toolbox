@@ -2,6 +2,7 @@
 package stringutil
 
 import (
+	"encoding/json"
 	"errors"
 	"net/url"
 	"regexp"
@@ -125,4 +126,10 @@ func IsTimeStringValid(timeString, format string) bool {
 		return false
 	}
 	return true
+}
+
+// GetJsonStr 获取json字符串
+func GetJsonStr(obj interface{}) string {
+	c, _ := json.Marshal(obj)
+	return string(c)
 }

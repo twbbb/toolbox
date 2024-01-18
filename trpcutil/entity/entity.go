@@ -31,3 +31,9 @@ type RedisInfo struct {
 	Passwd  string `yaml:"passwd"`
 	DB      int    `yaml:"db"`
 }
+
+// MongodbInfo mongo配置
+type MongodbInfo struct {
+	Uri      string `yaml:"uri"`
+	Database string `yaml:"database"`
+}

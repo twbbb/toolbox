@@ -1,5 +1,5 @@
 // Package rainbowconfig rainbowconfig
-package rainbowconfig
+package initdata
 
 import (
 	"context"
@@ -10,37 +10,6 @@ import (
 	rainbowLogger "git.code.oa.com/trpc-go/trpc-go/log"
 	"gopkg.in/yaml.v2"
 )
-
-// DBInfo 配置
-type DBInfo struct {
-	DSN            string `yaml:"dsn"`
-	MaxIdleConnNum int    `yaml:"maxIdleConnNum"`
-	MaxConnNum     int    `yaml:"maxConnNum"`
-}
-
-// TrpcInfo 配置
-type TrpcInfo struct {
-	Namespace string `yaml:"namespace"`
-	Env       string `yaml:"env"`
-	Target    string `yaml:"target"`
-	Timeout   int32  `yaml:"timeout"`
-}
-
-// TafInfo 配置
-type TafInfo struct {
-	Namespace string `yaml:"namespace"`
-	Env       string `yaml:"env"`
-	Target    string `yaml:"target"`
-	Timeout   int32  `yaml:"timeout"`
-	TafObj    string `yaml:"tafObj"`
-}
-
-// RedisInfo redis配置
-type RedisInfo struct {
-	Address string `yaml:"address"`
-	Passwd  string `yaml:"passwd"`
-	DB      int    `yaml:"db"`
-}
 
 // InitCfg 初始化七彩石配置
 func InitCfg(filename string, appConf interface{}) (err error) {

@@ -1,4 +1,4 @@
-// Package rainbowconfig rainbowconfig
+// Package initdata initdata
 package initdata
 
 import (

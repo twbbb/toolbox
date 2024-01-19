@@ -27,6 +27,7 @@ func GetTafOpts(tafConfig entity.TafInfo) (string, []client.Option) {
 		client.WithTimeout(time.Duration(tafConfig.Timeout) * time.Millisecond),
 		client.WithNamespace(tafConfig.Namespace),
 		client.WithEnvKey(tafConfig.Env),
+		client.WithCalleeMetadata("env", tafConfig.Env),
 	}
 	return tafConfig.TafObj, options
 }

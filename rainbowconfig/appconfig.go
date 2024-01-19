@@ -1,5 +1,5 @@
-// Package initdata initdata
-package initdata
+// Package rainbowconfig rainbowconfig
+package rainbowconfig
 
 import (
 	"context"

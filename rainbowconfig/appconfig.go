@@ -12,7 +12,9 @@ import (
 )
 
 // InitCfg 初始化七彩石配置
-func InitCfg(filename string, appConf interface{}) (err error) {
+func InitCfg(
+	filename string, appConf interface{}, callback func(appConf interface{}, err error),
+) (err error) {
 	rainbowLogger.Infof("rainbow init start")
 	// 使用trpc-go/config中Watch接口监听七彩石远程配置变化
 	var c config.Config
@@ -44,10 +46,15 @@ func InitCfg(filename string, appConf interface{}) (err error) {
 		// 监听后续rainbowConfig的变化
 		go func() {
 			for r := range configChan {
-				if watchErr = yaml.Unmarshal([]byte(r.Value()), appConf); watchErr == nil {
+				watchErr := yaml.Unmarshal([]byte(r.Value()), appConf)
+				if watchErr != nil {
 					rainbowLogger.Errorf("watchErr event: %d, reload fail,%+v ", r.Event(), watchErr)
+				} else {
+					rainbowLogger.Infof("event: %d, reload config ", r.Event())
 				}
-				rainbowLogger.Infof("event: %d, reload config ", r.Event())
+				if callback != nil {
+					callback(appConf, watchErr)
+				}
 			}
 		}()
 	}

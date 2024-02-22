@@ -133,3 +133,40 @@ func GetJsonStr(obj interface{}) string {
 	c, _ := json.Marshal(obj)
 	return string(c)
 }
+
+// GetMaskStr 获取脱敏数据
+func GetMaskStr(str string, plainType int) string {
+
+	runes := []rune(str)
+	runesLen := len(runes)
+	if runesLen <= 1 {
+		return str
+	}
+	if plainType == 100 && strings.Contains(str, "@") {
+		result := ""
+		res := strings.Split(str, "@")
+		if len(res) == 2 {
+			if len(res[0]) < 3 {
+				resString := "***"
+				result = resString + "@" + res[1]
+			} else {
+				res2 := Substr2(str, 0, 3)
+				resString := res2 + "***"
+				result = resString + "@" + res[1]
+			}
+			return result
+		}
+	}
+	// 截取一半显示
+	showLen := runesLen * 1 / 2
+	showRune := runes[0:showLen]
+	showStr := string(showRune)
+	maskStr := showStr + strings.Repeat("*", runesLen-showLen)
+	return maskStr
+}
+
+// Substr2 截取字符串
+func Substr2(str string, start int, end int) string {
+	rs := []rune(str)
+	return string(rs[start:end])
+}

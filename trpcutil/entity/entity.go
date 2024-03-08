@@ -1,4 +1,4 @@
-// entity 公共的结构体
+// Package entity 公共的结构体
 package entity
 
 // DBInfo 配置

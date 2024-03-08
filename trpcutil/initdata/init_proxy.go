@@ -1,4 +1,4 @@
-// initdata initdata初始化
+// Package initdata initdata初始化
 package initdata
 
 import (

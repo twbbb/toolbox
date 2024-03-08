@@ -1,3 +1,4 @@
+// Package osutil osutil方法
 package osutil
 
 import (

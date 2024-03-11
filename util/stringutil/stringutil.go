@@ -2,14 +2,25 @@
 package stringutil
 
 import (
+	"crypto/md5"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 )
+
+// MD5Hash 获取md5的数据
+func MD5Hash(str string) string {
+	hash := md5.New()
+	hash.Write([]byte(str))
+	hashValue := hash.Sum(nil)
+	hashString := fmt.Sprintf("%x", hashValue)
+	return hashString
+}
 
 // GetFloat64Val 分割并且去掉空的数据
 func GetFloat64Val(str string, defaultVal float64) float64 {

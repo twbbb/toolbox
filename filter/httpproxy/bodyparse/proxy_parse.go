@@ -26,9 +26,9 @@ func (b ProxyBodyParseImpl) GetReqStr(ctx context.Context, req interface{}, serv
 	}
 
 	proxyMap := make(map[string]interface{})
-	if reqMap, ok := req.(map[string]interface{}); ok {
-		proxyMap = reqMap
-
+	err = json.Unmarshal(reqJSON, &proxyMap)
+	if err != nil {
+		log.Errorf("json.Unmarshal err|%s|%+v", reqJSON, err)
 	}
 
 	proxyMap["reqStr"] = string(reqJSON)

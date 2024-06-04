@@ -25,7 +25,12 @@ func (b ProxyBodyParseImpl) GetReqStr(ctx context.Context, req interface{}, serv
 		return "", err
 	}
 
-	proxyMap := make(map[string]string)
+	proxyMap := make(map[string]interface{})
+	if reqMap, ok := req.(map[string]interface{}); ok {
+		proxyMap = reqMap
+
+	}
+
 	proxyMap["reqStr"] = string(reqJSON)
 
 	return b.SimpleBodyParseImpl.GetReqStr(ctx, proxyMap, servieName, method)

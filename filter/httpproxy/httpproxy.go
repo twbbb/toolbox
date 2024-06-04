@@ -65,11 +65,9 @@ func clientProxy() filter.ClientFilter {
 		method := path.Base(msg.ClientRPCName())
 		if method == "" {
 			method = msg.CalleeMethod()
-
 		}
-		reqJSON, err := httpProxyArg.BodyParse.GetReqStr(ctx, req, servieName, method)
 
-		requestFlag, httpRsp, err := httpRequest(ctx, servieName, method, req, reqJSON)
+		requestFlag, httpRsp, err := httpRequest(ctx, servieName, method, req)
 		// 有走http请求
 		if requestFlag {
 			if err != nil {
@@ -91,19 +89,24 @@ func clientProxy() filter.ClientFilter {
 	}
 }
 
-func httpRequest(ctx context.Context, servieName string, method string, req interface{}, reqJsonStr string) (
+func httpRequest(ctx context.Context, servieName string, method string, req interface{}) (
 	bool, []byte,
 	error,
 ) {
-
-	md5Str := httpProxyArg.BodyParse.GetReqKey(ctx, req, reqJsonStr)
-	fileReqName := servieName + method + "Req" + md5Str
-	fileRspName := servieName + method + "Rsp" + md5Str
-	exists, err := exists(httpProxyArg.LocalFilePath + fileRspName)
 	_, ok := httpProxyArg.ServiceMap[servieName]
 	if !ok {
 		return false, nil, nil
 	}
+
+	reqJsonStr, err := httpProxyArg.BodyParse.GetReqStr(ctx, req, servieName, method)
+	if err != nil {
+		return false, nil, err
+	}
+	md5Str := httpProxyArg.BodyParse.GetReqKey(ctx, req, reqJsonStr)
+	fileReqName := servieName + method + "Req" + md5Str
+	fileRspName := servieName + method + "Rsp" + md5Str
+	exists, err := exists(httpProxyArg.LocalFilePath + fileRspName)
+
 	requestFlag := true
 	url := fmt.Sprintf("%s/%s/%s", httpProxyArg.BaseTrpcUrl, httpProxyArg.ServiceMap[servieName], method)
 	if err != nil {

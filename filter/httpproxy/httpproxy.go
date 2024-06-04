@@ -29,7 +29,7 @@ type HttpProxyArg struct {
 	ServiceMap map[string]string `yaml:"serviceMap"`
 	Cookie     string            `yaml:"cookie"` // woa的cookie
 	BodyParse  bodyparse.BodyParse
-	HttpForce  bool // 是否强制走http请求
+	HttpForce  bool `yaml:"httpForce"` // 是否强制走http请求
 }
 
 var httpProxyArg HttpProxyArg

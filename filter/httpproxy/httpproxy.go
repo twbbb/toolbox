@@ -29,6 +29,7 @@ type HttpProxyArg struct {
 	ServiceMap map[string]string `yaml:"serviceMap"`
 	Cookie     string            `yaml:"cookie"` // woa的cookie
 	BodyParse  bodyparse.BodyParse
+	HttpForce  bool // 是否强制走http请求
 }
 
 var httpProxyArg HttpProxyArg
@@ -108,7 +109,7 @@ func httpRequest(ctx context.Context, servieName string, method string, req inte
 	if err != nil {
 		return requestFlag, nil, err
 	}
-	if exists {
+	if exists && !httpProxyArg.HttpForce {
 		data, err := ioutil.ReadFile(httpProxyArg.LocalFilePath + fileRspName)
 		return requestFlag, data, err
 	} else {

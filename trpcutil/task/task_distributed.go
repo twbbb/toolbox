@@ -16,14 +16,14 @@ import (
 
 // InitTaskTicker 初始定时任务
 func InitTaskTicker(
-	runFunc func(ctx context.Context) error, taskName string, secondDuration int, distributLock entity.DistributLock,
+	runFunc func(ctx context.Context) error, taskName string, secondDuration int, lock entity.DistributLock,
 ) error {
-	taskFunc := getTaskDistributFunc(runFunc, taskName, secondDuration, distributLock)
+	taskFunc := getTaskDistributFunc(runFunc, taskName, secondDuration, lock)
 	return DoDistributTask(taskFunc)
 }
 
 func getTaskDistributFunc(
-	runFunc func(ctx context.Context) error, taskName string, secondDuration int, distributLock entity.DistributLock,
+	runFunc func(ctx context.Context) error, taskName string, secondDuration int, lock entity.DistributLock,
 ) entity.TaskDistributFunc {
 	taskFunc := entity.TaskDistributFunc{
 		TaskName:      taskName,
@@ -32,7 +32,7 @@ func getTaskDistributFunc(
 		InitStart:     false,
 		MaxRunTime:    30,
 		BaseLockKey:   "task:",
-		DistributLock: distributLock,
+		DistributLock: lock,
 		Logger:        log.GetDefaultLogger(),
 		ReportName:    "task",
 	}

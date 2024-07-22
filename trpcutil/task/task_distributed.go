@@ -12,7 +12,33 @@ import (
 	"git.code.oa.com/trpc-go/trpc-go/log"
 	"git.woa.com/th-go/toolbox/trpcutil/entity"
 	"git.woa.com/th-go/toolbox/trpcutil/report"
+	"github.com/redis/go-redis/v9"
 )
+
+// InitTaskTicker 初始定时任务
+func InitTaskTicker(
+	runFunc func(ctx context.Context) error, taskName string, secondDuration int, client *redis.Client,
+) error {
+	taskFunc := getTaskDistributFunc(runFunc, taskName, secondDuration, client)
+	return DoDistributTask(taskFunc)
+}
+
+func getTaskDistributFunc(
+	runFunc func(ctx context.Context) error, taskName string, secondDuration int, client *redis.Client,
+) entity.TaskDistributFunc {
+	taskFunc := entity.TaskDistributFunc{
+		TaskName:      taskName,
+		CornDuration:  secondDuration,
+		TaskFunc:      runFunc,
+		InitStart:     false,
+		MaxRunTime:    30,
+		BaseLockKey:   "task:",
+		DistributLock: &entity.TaskRedisLock{Client: client},
+		Logger:        log.GetDefaultLogger(),
+		ReportName:    "task",
+	}
+	return taskFunc
+}
 
 // 执行分布式定时任务
 func DoDistributTask(taskFunc entity.TaskDistributFunc) error {
@@ -64,7 +90,7 @@ func runDistributProcess(
 	lockKey := taskFunc.BaseLockKey + taskFunc.TaskName + ":maxlock"
 
 	// 任务执行的锁
-	lock := taskFunc.DistributLock.Lock(ctx, lockKey, "1", time.Minute*time.Duration(taskFunc.MaxRunTime))
+	lock := taskFunc.DistributLock.Lock(ctx, lockKey, time.Minute*time.Duration(taskFunc.MaxRunTime))
 	if !lock {
 		return nil
 	}
@@ -73,7 +99,7 @@ func runDistributProcess(
 
 	// 定时任务，防止重复执行，比如多台机器，3分钟只能执行一次
 	cornKey := taskFunc.BaseLockKey + taskFunc.TaskName + ":corn"
-	lock = taskFunc.DistributLock.Lock(ctx, cornKey, "1", time.Minute*time.Duration(taskFunc.CornDuration))
+	lock = taskFunc.DistributLock.Lock(ctx, cornKey, time.Minute*time.Duration(taskFunc.CornDuration))
 	if !lock {
 		return nil
 	}
@@ -92,7 +118,7 @@ func runDistributProcess(
 			default:
 				err = errors.New("unknow panic")
 			}
-			report.ReportCache(requestId, "task_distribut", taskFunc.TaskName, true, getUseTimeSec(begin))
+			report.ReportCache(requestId, taskFunc.ReportName, taskFunc.TaskName, false, getUseTimeSec(begin))
 
 			log.ErrorContextf(ctx, "runProcess panic %+v", r)
 		}
@@ -103,6 +129,6 @@ func runDistributProcess(
 	if err != nil {
 		log.ErrorContextf(ctx, "runProcess err%+v", err)
 	}
-	report.ReportCache(requestId, "task_distribut", taskFunc.TaskName, true, getUseTimeSec(begin))
+	report.ReportCache(requestId, taskFunc.ReportName, taskFunc.TaskName, true, getUseTimeSec(begin))
 	return err
 }

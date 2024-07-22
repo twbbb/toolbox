@@ -14,16 +14,22 @@ import (
 	"git.woa.com/th-go/toolbox/trpcutil/report"
 )
 
-// InitCacheTicker 初始化缓存和定时器
+// InitCacheTicker 初始化本地缓存任务
 func InitCacheTicker(runFunc func(ctx context.Context) error, taskName string, secondDuration int) error {
+	taskFunc := GetDefaultTaskFunc(runFunc, taskName, secondDuration)
+	return DoTask(taskFunc)
+}
+
+func GetDefaultTaskFunc(runFunc func(ctx context.Context) error, taskName string, secondDuration int) entity.TaskFunc {
 	taskFunc := entity.TaskFunc{
 		TaskName:     taskName,
 		CornDuration: secondDuration,
 		TaskFunc:     runFunc,
 		InitStart:    true,
 		Logger:       log.GetDefaultLogger(),
+		ReportName:   "cache",
 	}
-	return DoTask(taskFunc)
+	return taskFunc
 }
 
 // DoTask 执行定时任务
@@ -89,7 +95,7 @@ func runProcess(
 				err = errors.New("unknow panic")
 			}
 
-			report.ReportCache(requestId, "task", taskFunc.TaskName, true, getUseTimeSec(begin))
+			report.ReportCache(requestId, taskFunc.ReportName, taskFunc.TaskName, false, getUseTimeSec(begin))
 			log.ErrorContextf(ctx, "runProcess panic %+v", r)
 		}
 
@@ -99,7 +105,7 @@ func runProcess(
 	if err != nil {
 		log.ErrorContextf(ctx, "runProcess err%+v", err)
 	}
-	report.ReportCache(requestId, "task", taskFunc.TaskName, err == nil, getUseTimeSec(begin))
+	report.ReportCache(requestId, taskFunc.ReportName, taskFunc.TaskName, err == nil, getUseTimeSec(begin))
 	return err
 }
 

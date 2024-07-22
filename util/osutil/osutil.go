@@ -9,3 +9,8 @@ import (
 func IsLocalEnv() bool {
 	return os.Getenv("DOCKER_ENV") == ""
 }
+
+// GetPodIP 获取podip
+func GetPodIP() string {
+	return os.Getenv("POD_IP")
+}

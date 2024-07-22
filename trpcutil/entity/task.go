@@ -17,18 +17,16 @@ type TaskFunc struct {
 	TaskFunc func(ctx context.Context) error
 	// 启动执行
 	InitStart bool
-
 	// Logger
 	Logger log.Logger
+	// 上报名称
+	ReportName string
 }
 
 // DistributLock 分布式锁
 type DistributLock interface {
 	// Lock 锁定
-	Lock(ctx context.Context, key, value string, expiration time.Duration) bool
-
-	// CanUnLock 启动时候，当前服务是否可以解锁
-	CanUnLock(ctx context.Context, key string) bool
+	Lock(ctx context.Context, key string, expiration time.Duration) bool
 
 	// UnLock 解锁
 	UnLock(ctx context.Context, key string) bool
@@ -44,7 +42,7 @@ type TaskDistributFunc struct {
 	TaskFunc func(ctx context.Context) error
 	// 启动执行
 	InitStart bool
-	// 最大执行时间，分钟
+	// 最大执行时间，分钟，比如30，则30分钟没有执行完，也会释放锁
 	MaxRunTime int
 	// 分布式锁的basekey
 	BaseLockKey string
@@ -53,4 +51,6 @@ type TaskDistributFunc struct {
 
 	// Logger
 	Logger log.Logger
+	// 上报名称
+	ReportName string
 }

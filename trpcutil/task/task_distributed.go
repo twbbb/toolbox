@@ -12,19 +12,18 @@ import (
 	"git.code.oa.com/trpc-go/trpc-go/log"
 	"git.woa.com/th-go/toolbox/trpcutil/entity"
 	"git.woa.com/th-go/toolbox/trpcutil/report"
-	"github.com/redis/go-redis/v9"
 )
 
 // InitTaskTicker 初始定时任务
 func InitTaskTicker(
-	runFunc func(ctx context.Context) error, taskName string, secondDuration int, client *redis.Client,
+	runFunc func(ctx context.Context) error, taskName string, secondDuration int, distributLock entity.DistributLock,
 ) error {
-	taskFunc := getTaskDistributFunc(runFunc, taskName, secondDuration, client)
+	taskFunc := getTaskDistributFunc(runFunc, taskName, secondDuration, distributLock)
 	return DoDistributTask(taskFunc)
 }
 
 func getTaskDistributFunc(
-	runFunc func(ctx context.Context) error, taskName string, secondDuration int, client *redis.Client,
+	runFunc func(ctx context.Context) error, taskName string, secondDuration int, distributLock entity.DistributLock,
 ) entity.TaskDistributFunc {
 	taskFunc := entity.TaskDistributFunc{
 		TaskName:      taskName,
@@ -33,7 +32,7 @@ func getTaskDistributFunc(
 		InitStart:     false,
 		MaxRunTime:    30,
 		BaseLockKey:   "task:",
-		DistributLock: &entity.TaskRedisLock{Client: client},
+		DistributLock: distributLock,
 		Logger:        log.GetDefaultLogger(),
 		ReportName:    "task",
 	}

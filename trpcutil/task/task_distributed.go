@@ -92,7 +92,9 @@ func runDistributProcess(
 	go func() {
 		select {
 		case <-sigs:
+			log.InfoContextf(ctx, "runDistributProcess SIGTERM")
 			cancel() // 在接收到 SIGTERM 信号时取消上下文
+			return
 		case <-ctx.Done():
 			return // 如果主上下文被取消，也停止此 goroutine
 		}

@@ -139,7 +139,7 @@ func runDistributProcess(
 			default:
 				err = errors.New("unknow panic")
 			}
-			report.ReportCache(requestId, taskFunc.ReportName, taskFunc.TaskName, false, getUseTimeSec(begin))
+			report.ReportCache(requestId, taskFunc.ReportName, taskFunc.TaskName, false, getUseTime(begin))
 
 			log.ErrorContextf(ctx, "runProcess panic %+v", r)
 		}
@@ -151,7 +151,7 @@ func runDistributProcess(
 	if err != nil {
 		log.ErrorContextf(ctx, "runProcess err%+v", err)
 	}
-	report.ReportCache(requestId, taskFunc.ReportName, taskFunc.TaskName, true, getUseTimeSec(begin))
+	report.ReportCache(requestId, taskFunc.ReportName, taskFunc.TaskName, true, getUseTime(begin))
 	log.InfoContextf(ctx, "runDistributProcess end")
 	return err
 }

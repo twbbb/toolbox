@@ -95,7 +95,7 @@ func runProcess(
 				err = errors.New("unknow panic")
 			}
 
-			report.ReportCache(requestId, taskFunc.ReportName, taskFunc.TaskName, false, getUseTimeSec(begin))
+			report.ReportCache(requestId, taskFunc.ReportName, taskFunc.TaskName, false, getUseTime(begin))
 			log.ErrorContextf(ctx, "runProcess panic %+v", r)
 		}
 
@@ -105,15 +105,15 @@ func runProcess(
 	if err != nil {
 		log.ErrorContextf(ctx, "runProcess err%+v", err)
 	}
-	report.ReportCache(requestId, taskFunc.ReportName, taskFunc.TaskName, err == nil, getUseTimeSec(begin))
+	report.ReportCache(requestId, taskFunc.ReportName, taskFunc.TaskName, err == nil, getUseTime(begin))
 	log.InfoContextf(ctx, "runProcess end")
 	return err
 }
 
-func getUseTimeSec(begin time.Time) float64 {
+func getUseTime(begin time.Time) float64 {
 	// 计算经过的时间，并转换为秒
-	elapsed := time.Since(begin).Seconds()
-	// 格式化输出，保留两位小数
-	elapsedRounded := math.Round(elapsed*10000) / 10000
-	return elapsedRounded
+	// elapsed := time.Since(begin).Seconds()
+	// // 格式化输出，保留两位小数
+	// elapsedRounded := math.Round(elapsed*10000) / 10000
+	return float64(time.Since(begin).Nanoseconds())
 }

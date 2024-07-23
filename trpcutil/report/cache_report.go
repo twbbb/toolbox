@@ -9,7 +9,6 @@ import (
 
 // ReportCache ...
 func ReportCache(requestId string, reportName string, biz string, suc bool, costTms float64) {
-
 	dims := make([]*metrics.Dimension, 0, 4)
 	dims = append(dims, &metrics.Dimension{Name: "env", Value: trpc.GlobalConfig().Global.EnvName})
 	dims = append(dims, &metrics.Dimension{Name: "srcContain", Value: trpc.GlobalConfig().Global.ContainerName})
@@ -24,9 +23,9 @@ func ReportCache(requestId string, reportName string, biz string, suc bool, cost
 		datas = append(datas, metrics.NewMetrics("failCount", 0, metrics.PolicySUM))
 	}
 
-	datas = append(datas, metrics.NewMetrics("allCost", costTms, metrics.PolicySUM))
-	datas = append(datas, metrics.NewMetrics("avgCost", costTms, metrics.PolicyAVG))
-	datas = append(datas, metrics.NewMetrics("maxCost", costTms, metrics.PolicyMAX))
+	datas = append(datas, metrics.NewMetrics("CostTime", costTms, metrics.PolicyTimer))
+	// datas = append(datas, metrics.NewMetrics("avgCost", costTms, metrics.PolicyAVG))
+	// datas = append(datas, metrics.NewMetrics("maxCost", costTms, metrics.PolicyMAX))
 
 	rec := metrics.NewMultiDimensionMetricsX(reportName, dims, datas)
 

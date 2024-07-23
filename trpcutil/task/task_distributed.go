@@ -5,9 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	"git.code.oa.com/trpc-go/trpc-go"
@@ -15,6 +12,7 @@ import (
 	"git.code.oa.com/trpc-go/trpc-go/log"
 	"git.woa.com/th-go/toolbox/trpcutil/entity"
 	"git.woa.com/th-go/toolbox/trpcutil/report"
+	"git.woa.com/th-go/toolbox/util/osutil"
 )
 
 // InitTaskTicker 初始定时任务
@@ -87,21 +85,6 @@ func runDistributProcess(
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() // 确保上下文在函数退出时取消
 
-	// 监听 SIGTERM 信号
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGTERM)
-	go func() {
-		select {
-		case <-sigs:
-			log.Infof("runDistributProcess SIGTERM:%s", requestId)
-			cancel() // 在接收到 SIGTERM 信号时取消上下文
-			return
-		case <-ctx.Done():
-			log.Infof("runDistributProcess done:%s", requestId)
-			return // 如果主上下文被取消，也停止此 goroutine
-		}
-	}()
-
 	begin := time.Now()
 	loggerInfo := taskFunc.Logger
 	ctx, msg := codec.EnsureMessage(ctx)
@@ -114,27 +97,25 @@ func runDistributProcess(
 	// 任务执行的锁
 	lock := taskFunc.DistributLock.Lock(ctx, lockKey, time.Minute*time.Duration(taskFunc.MaxRunTime))
 	if !lock {
+		log.InfoContextf(ctx, "runDistributProcess lock fail:%s", lockKey)
 		return nil
 	}
 
-	// 使用 defer 包裹一个匿名函数以应用复杂逻辑
-	defer func() {
-		// 检查上下文是否已被取消
-		if ctx.Err() == context.Canceled {
-			log.Infof("Canceled UnLock:%s:%s", lockKey, requestId)
-
-			// 如果 ctx 已取消，尝试使用 context.Background() 解锁
-			taskFunc.DistributLock.UnLock(context.Background(), lockKey)
-		} else {
-			// 正常解锁
+	// 重启时候，接收到 SIGTERM 信号时，取消上下文，释放锁
+	osutil.ListenForSIGTERM(
+		ctx, cancel, func() {
+			log.InfoContextf(ctx, "runDistributProcess SIGTERM")
 			taskFunc.DistributLock.UnLock(ctx, lockKey)
-		}
-	}()
+		},
+	)
+
+	defer taskFunc.DistributLock.UnLock(ctx, lockKey)
 
 	// 定时任务，防止重复执行，比如多台机器，3分钟只能执行一次
 	cornKey := taskFunc.BaseLockKey + taskFunc.TaskName + ":corn"
 	lock = taskFunc.DistributLock.Lock(ctx, cornKey, time.Minute*time.Duration(taskFunc.CornDuration))
 	if !lock {
+		log.InfoContextf(ctx, "runDistributProcess corn fail:%s", cornKey)
 		return nil
 	}
 

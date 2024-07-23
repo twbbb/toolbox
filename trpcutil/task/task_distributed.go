@@ -21,11 +21,12 @@ import (
 func InitTaskTicker(
 	runFunc func(ctx context.Context) error, taskName string, secondDuration int, lock entity.DistributLock,
 ) error {
-	taskFunc := getDefaultTaskDistributFunc(runFunc, taskName, secondDuration, lock)
+	taskFunc := GetDefaultTaskDistributFunc(runFunc, taskName, secondDuration, lock)
 	return DoDistributTask(taskFunc)
 }
 
-func getDefaultTaskDistributFunc(
+// GetDefaultTaskDistributFunc 获取默认的分布式定时任务
+func GetDefaultTaskDistributFunc(
 	runFunc func(ctx context.Context) error, taskName string, secondDuration int, lock entity.DistributLock,
 ) entity.TaskDistributFunc {
 	taskFunc := entity.TaskDistributFunc{

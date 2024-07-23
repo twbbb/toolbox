@@ -115,7 +115,17 @@ func runDistributProcess(
 		return nil
 	}
 
-	defer taskFunc.DistributLock.UnLock(ctx, lockKey)
+	// 使用 defer 包裹一个匿名函数以应用复杂逻辑
+	defer func() {
+		// 检查上下文是否已被取消
+		if ctx.Err() == context.Canceled {
+			// 如果 ctx 已取消，尝试使用 context.Background() 解锁
+			taskFunc.DistributLock.UnLock(context.Background(), lockKey)
+		} else {
+			// 正常解锁
+			taskFunc.DistributLock.UnLock(ctx, lockKey)
+		}
+	}()
 
 	// 定时任务，防止重复执行，比如多台机器，3分钟只能执行一次
 	cornKey := taskFunc.BaseLockKey + taskFunc.TaskName + ":corn"

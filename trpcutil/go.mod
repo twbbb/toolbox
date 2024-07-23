@@ -6,7 +6,7 @@ require git.code.oa.com/trpc-go/trpc-go v0.15.1
 
 require (
 	git.woa.com/jce/jce v1.2.0 // indirect
-	git.woa.com/th-go/toolbox/util v0.1.4 // indirect
+	git.woa.com/th-go/toolbox/util v0.1.5 // indirect
 	git.woa.com/trpc-go/go_reuseport v1.7.0 // indirect
 	git.woa.com/trpc-go/tnet v0.0.9 // indirect
 	github.com/BurntSushi/toml v0.3.1 // indirect

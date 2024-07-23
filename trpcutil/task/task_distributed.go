@@ -17,15 +17,17 @@ import (
 
 // InitTaskTicker 初始定时任务
 func InitTaskTicker(
-	runFunc func(ctx context.Context) error, taskName string, secondDuration int, lock entity.DistributLock,
+	runFunc func(ctx context.Context) error, taskName string, secondDuration int, baseLockKey string,
+	lock entity.DistributLock,
 ) error {
-	taskFunc := GetDefaultTaskDistributFunc(runFunc, taskName, secondDuration, lock)
+	taskFunc := GetDefaultTaskDistributFunc(runFunc, taskName, secondDuration, baseLockKey, lock)
 	return DoDistributTask(taskFunc)
 }
 
 // GetDefaultTaskDistributFunc 获取默认的分布式定时任务
 func GetDefaultTaskDistributFunc(
-	runFunc func(ctx context.Context) error, taskName string, secondDuration int, lock entity.DistributLock,
+	runFunc func(ctx context.Context) error, taskName string, secondDuration int, baseLockKey string,
+	lock entity.DistributLock,
 ) entity.TaskDistributFunc {
 	taskFunc := entity.TaskDistributFunc{
 		TaskName:      taskName,
@@ -33,7 +35,7 @@ func GetDefaultTaskDistributFunc(
 		TaskFunc:      runFunc,
 		InitStart:     false,
 		MaxRunTime:    60,
-		BaseLockKey:   "task:",
+		BaseLockKey:   baseLockKey,
 		DistributLock: lock,
 		Logger:        log.GetDefaultLogger(),
 		ReportName:    "task",

@@ -5,6 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"git.code.oa.com/trpc-go/trpc-go"
@@ -79,9 +82,25 @@ func runDistributProcess(
 	taskFunc entity.TaskDistributFunc, requestId string,
 ) (err error) {
 
+	// 创建可以取消的上下文
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel() // 确保上下文在函数退出时取消
+
+	// 监听 SIGTERM 信号
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGTERM)
+	go func() {
+		select {
+		case <-sigs:
+			cancel() // 在接收到 SIGTERM 信号时取消上下文
+		case <-ctx.Done():
+			return // 如果主上下文被取消，也停止此 goroutine
+		}
+	}()
+
 	begin := time.Now()
 	loggerInfo := taskFunc.Logger
-	ctx, msg := codec.EnsureMessage(context.Background())
+	ctx, msg := codec.EnsureMessage(ctx)
 	trpc.SetMetaData(ctx, "requestId", []byte(requestId))
 	loggerInfo = loggerInfo.With(log.Field{Key: "requestId", Value: requestId})
 	msg.WithLogger(loggerInfo)
@@ -123,11 +142,13 @@ func runDistributProcess(
 		}
 
 	}()
+	log.InfoContextf(ctx, "runDistributProcess start")
 
 	err = taskFunc.TaskFunc(ctx)
 	if err != nil {
 		log.ErrorContextf(ctx, "runProcess err%+v", err)
 	}
 	report.ReportCache(requestId, taskFunc.ReportName, taskFunc.TaskName, true, getUseTimeSec(begin))
+	log.InfoContextf(ctx, "runDistributProcess end")
 	return err
 }

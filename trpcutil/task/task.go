@@ -100,12 +100,13 @@ func runProcess(
 		}
 
 	}()
-
+	log.InfoContextf(ctx, "runProcess start")
 	err = taskFunc.TaskFunc(ctx)
 	if err != nil {
 		log.ErrorContextf(ctx, "runProcess err%+v", err)
 	}
 	report.ReportCache(requestId, taskFunc.ReportName, taskFunc.TaskName, err == nil, getUseTimeSec(begin))
+	log.InfoContextf(ctx, "runProcess end")
 	return err
 }
 

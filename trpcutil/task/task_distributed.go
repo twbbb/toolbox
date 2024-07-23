@@ -18,11 +18,11 @@ import (
 func InitTaskTicker(
 	runFunc func(ctx context.Context) error, taskName string, secondDuration int, lock entity.DistributLock,
 ) error {
-	taskFunc := getTaskDistributFunc(runFunc, taskName, secondDuration, lock)
+	taskFunc := getDefaultTaskDistributFunc(runFunc, taskName, secondDuration, lock)
 	return DoDistributTask(taskFunc)
 }
 
-func getTaskDistributFunc(
+func getDefaultTaskDistributFunc(
 	runFunc func(ctx context.Context) error, taskName string, secondDuration int, lock entity.DistributLock,
 ) entity.TaskDistributFunc {
 	taskFunc := entity.TaskDistributFunc{

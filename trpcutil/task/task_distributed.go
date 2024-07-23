@@ -32,7 +32,7 @@ func GetDefaultTaskDistributFunc(
 		CornDuration:  secondDuration,
 		TaskFunc:      runFunc,
 		InitStart:     false,
-		MaxRunTime:    30,
+		MaxRunTime:    60,
 		BaseLockKey:   "task:",
 		DistributLock: lock,
 		Logger:        log.GetDefaultLogger(),
@@ -92,32 +92,36 @@ func runDistributProcess(
 	loggerInfo = loggerInfo.With(log.Field{Key: "requestId", Value: requestId})
 	msg.WithLogger(loggerInfo)
 
-	lockKey := taskFunc.BaseLockKey + taskFunc.TaskName + ":maxlock"
-
-	// 任务执行的锁
-	lock := taskFunc.DistributLock.Lock(ctx, lockKey, time.Minute*time.Duration(taskFunc.MaxRunTime))
-	if !lock {
-		log.InfoContextf(ctx, "runDistributProcess lock fail:%s", lockKey)
-		return nil
-	}
-
-	// 重启时候，接收到 SIGTERM 信号时，取消上下文，释放锁
-	osutil.ListenForSIGTERM(
-		ctx, cancel, func() {
-			log.InfoContextf(ctx, "runDistributProcess SIGTERM")
-			taskFunc.DistributLock.UnLock(ctx, lockKey)
-		},
-	)
-
-	defer taskFunc.DistributLock.UnLock(ctx, lockKey)
-
 	// 定时任务，防止重复执行，比如多台机器，3分钟只能执行一次
 	cornKey := taskFunc.BaseLockKey + taskFunc.TaskName + ":corn"
-	lock = taskFunc.DistributLock.Lock(ctx, cornKey, time.Minute*time.Duration(taskFunc.CornDuration))
-	if !lock {
+	lockState := taskFunc.DistributLock.Lock(ctx, cornKey, time.Minute*time.Duration(taskFunc.CornDuration))
+	if !lockState {
 		log.InfoContextf(ctx, "runDistributProcess corn fail:%s", cornKey)
 		return nil
 	}
+
+	maxTimeLockKey := taskFunc.BaseLockKey + taskFunc.TaskName + ":maxlock"
+	// 任务执行最大时间的锁
+	lock := taskFunc.DistributLock.Lock(ctx, maxTimeLockKey, time.Minute*time.Duration(taskFunc.MaxRunTime))
+	if !lock {
+		log.InfoContextf(ctx, "runDistributProcess lock fail:%s", maxTimeLockKey)
+		return nil
+	}
+	// 重启时候，接收到 SIGTERM 信号时，关闭上下文信号，修改锁定时间为2分钟。
+	osutil.ListenForSIGTERM(
+		ctx, cancel, func() {
+			log.InfoContextf(ctx, "runDistributProcess SIGTERM")
+			taskFunc.DistributLock.UnLock(ctx, maxTimeLockKey)
+			lock := taskFunc.DistributLock.Lock(ctx, maxTimeLockKey, time.Minute*2)
+			if lock {
+				log.InfoContextf(ctx, "MaxRunTime lock 2 min suc at SIGTERM")
+			} else {
+				log.InfoContextf(ctx, "MaxRunTime lock fail:%s", maxTimeLockKey)
+			}
+		},
+	)
+
+	defer taskFunc.DistributLock.UnLock(ctx, maxTimeLockKey)
 
 	defer func() {
 		// 放回EnsureMessage分配的的msg

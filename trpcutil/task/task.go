@@ -112,8 +112,8 @@ func runProcess(
 
 func getUseTime(begin time.Time) float64 {
 	// 计算经过的时间，并转换为秒
-	// elapsed := time.Since(begin).Seconds()
-	// // 格式化输出，保留两位小数
-	// elapsedRounded := math.Round(elapsed*10000) / 10000
-	return float64(time.Since(begin).Nanoseconds())
+	elapsed := time.Since(begin).Seconds()
+	// 格式化输出，保留两位小数
+	elapsedRounded := math.Round(elapsed*1000) / 1000
+	return elapsedRounded
 }

@@ -42,7 +42,7 @@ func DoTask(taskFunc entity.TaskFunc) error {
 	}
 	// 创建一个计时器
 	go func() {
-		ticks := time.NewTicker(time.Duration(taskFunc.CornDuration) * time.Minute)
+		ticks := time.NewTicker(time.Duration(taskFunc.CornDuration) * time.Second)
 		tick := ticks.C
 		runTimes := 0
 		var isRunning bool // 用来标记任务是否正在运行

@@ -34,7 +34,7 @@ func GetDefaultTaskDistributFunc(
 		CornDuration:  secondDuration,
 		TaskFunc:      runFunc,
 		InitStart:     false,
-		MaxRunTime:    60,
+		MaxRunTime:    60 * 60, // 60分钟
 		BaseLockKey:   baseLockKey,
 		DistributLock: lock,
 		Logger:        log.GetDefaultLogger(),
@@ -53,7 +53,7 @@ func DoDistributTask(taskFunc entity.TaskDistributFunc) error {
 	}
 	// 创建一个计时器
 	go func() {
-		ticks := time.NewTicker(time.Duration(taskFunc.CornDuration) * time.Minute)
+		ticks := time.NewTicker(time.Duration(taskFunc.CornDuration) * time.Second)
 		tick := ticks.C
 		runTimes := 0
 		var isRunning bool // 用来标记任务是否正在运行
@@ -96,7 +96,7 @@ func runDistributProcess(
 
 	// 定时任务，防止重复执行，比如多台机器，3分钟只能执行一次
 	cornKey := taskFunc.BaseLockKey + taskFunc.TaskName + ":corn"
-	lockState := taskFunc.DistributLock.Lock(ctx, cornKey, time.Minute*time.Duration(taskFunc.CornDuration))
+	lockState := taskFunc.DistributLock.Lock(ctx, cornKey, time.Second*time.Duration(taskFunc.CornDuration))
 	if !lockState {
 		log.InfoContextf(ctx, "runDistributProcess corn fail:%s", cornKey)
 		return nil
@@ -104,7 +104,7 @@ func runDistributProcess(
 
 	maxTimeLockKey := taskFunc.BaseLockKey + taskFunc.TaskName + ":maxlock"
 	// 任务执行最大时间的锁
-	lock := taskFunc.DistributLock.Lock(ctx, maxTimeLockKey, time.Minute*time.Duration(taskFunc.MaxRunTime))
+	lock := taskFunc.DistributLock.Lock(ctx, maxTimeLockKey, time.Second*time.Duration(taskFunc.MaxRunTime))
 	if !lock {
 		log.InfoContextf(ctx, "runDistributProcess lock fail:%s", maxTimeLockKey)
 		return nil

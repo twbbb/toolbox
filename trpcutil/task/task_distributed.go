@@ -92,10 +92,11 @@ func runDistributProcess(
 	go func() {
 		select {
 		case <-sigs:
-			log.InfoContextf(ctx, "runDistributProcess SIGTERM")
+			log.Infof("runDistributProcess SIGTERM:%s", requestId)
 			cancel() // 在接收到 SIGTERM 信号时取消上下文
 			return
 		case <-ctx.Done():
+			log.Infof("runDistributProcess done:%s", requestId)
 			return // 如果主上下文被取消，也停止此 goroutine
 		}
 	}()
@@ -119,6 +120,8 @@ func runDistributProcess(
 	defer func() {
 		// 检查上下文是否已被取消
 		if ctx.Err() == context.Canceled {
+			log.Infof("Canceled UnLock:%s:%s", lockKey, requestId)
+
 			// 如果 ctx 已取消，尝试使用 context.Background() 解锁
 			taskFunc.DistributLock.UnLock(context.Background(), lockKey)
 		} else {

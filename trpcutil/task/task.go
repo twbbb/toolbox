@@ -11,7 +11,7 @@ import (
 	"git.code.oa.com/trpc-go/trpc-go/codec"
 	"git.code.oa.com/trpc-go/trpc-go/log"
 	"git.woa.com/th-go/toolbox/trpcutil/entity"
-	"git.woa.com/th-go/toolbox/trpcutil/report"
+	"git.woa.com/th-go/toolbox/trpcutil/monitor"
 )
 
 // InitCacheTicker 初始化本地缓存任务
@@ -95,7 +95,7 @@ func runProcess(
 				err = errors.New("unknow panic")
 			}
 
-			report.ReportCache(requestId, taskFunc.ReportName, taskFunc.TaskName, false, getUseTime(begin))
+			monitor.ReportCache(requestId, taskFunc.ReportName, taskFunc.TaskName, false, getUseTime(begin))
 			log.ErrorContextf(ctx, "runProcess panic %+v", r)
 		}
 
@@ -105,7 +105,7 @@ func runProcess(
 	if err != nil {
 		log.ErrorContextf(ctx, "runProcess err%+v", err)
 	}
-	report.ReportCache(requestId, taskFunc.ReportName, taskFunc.TaskName, err == nil, getUseTime(begin))
+	monitor.ReportCache(requestId, taskFunc.ReportName, taskFunc.TaskName, err == nil, getUseTime(begin))
 	log.InfoContextf(ctx, "runProcess end")
 	return err
 }

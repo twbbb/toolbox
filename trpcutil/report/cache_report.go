@@ -8,7 +8,7 @@ import (
 )
 
 // ReportCache ...
-func ReportCache(requestId string, reportName string, biz string, suc, err bool, costTms float64) {
+func ReportCache(requestId string, reportName string, biz string, suc bool, costTms float64) {
 
 	dims := make([]*metrics.Dimension, 0, 4)
 	dims = append(dims, &metrics.Dimension{Name: "env", Value: trpc.GlobalConfig().Global.EnvName})

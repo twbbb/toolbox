@@ -48,14 +48,15 @@ func ReportData(ctx context.Context, dims []*metrics.Dimension, name string, isE
 // GetDefaultDimension 获取默认的纬度
 func GetDefaultDimension(ctx context.Context) []*metrics.Dimension {
 	msg := trpc.Message(ctx)
-	callerInterface := msg.CalleeServiceName()
-	if callerInterface == "" {
-		callerInterface = "none"
+	calleeMethod := msg.CalleeMethod()
+
+	if calleeMethod == "" {
+		calleeMethod = "none"
 	}
 	dims := []*metrics.Dimension{}
 	dims = append(dims, &metrics.Dimension{Name: "srcContain", Value: trpc.GlobalConfig().Global.ContainerName})
 	dims = append(dims, &metrics.Dimension{Name: "srcIP", Value: trpc.GlobalConfig().Global.LocalIP})
-	dims = append(dims, &metrics.Dimension{Name: "func", Value: callerInterface})
+	dims = append(dims, &metrics.Dimension{Name: "func", Value: calleeMethod})
 	return dims
 }
 

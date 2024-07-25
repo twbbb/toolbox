@@ -1,4 +1,4 @@
-// Package report report
+// Package report 上报
 package report
 
 import (
@@ -8,7 +8,7 @@ import (
 )
 
 // ReportCache ...
-func ReportCache(requestId string, reportName string, biz string, suc bool, costTms float64) {
+func ReportCache(requestId string, reportName string, biz string, suc, err bool, costTms float64) {
 
 	dims := make([]*metrics.Dimension, 0, 4)
 	dims = append(dims, &metrics.Dimension{Name: "env", Value: trpc.GlobalConfig().Global.EnvName})
@@ -36,19 +36,4 @@ func ReportCache(requestId string, reportName string, biz string, suc bool, cost
 			requestId, biz, rec.Name, err,
 		)
 	}
-}
-
-func calcDistr(distr []int64, distrLen int, val int64) []int {
-
-	result := make([]int, distrLen)
-
-	idx := 0
-	for ; idx < distrLen-1; idx++ {
-		if len(distr) > idx && val <= distr[idx] {
-			break
-		}
-	}
-	result[idx] = 1
-
-	return result
 }

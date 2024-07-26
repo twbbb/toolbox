@@ -146,6 +146,39 @@ func ArrToMapMapSlice[T any](arr []T, keyName1 string, keyName2 string) (map[str
 	return m, nil
 }
 
+// ArrToMapMapStruct 数组转换为map，key为keyName1，值为map2[keyName2]结构体
+func ArrToMapMapStruct[T any](arr []T, keyName1 string, keyName2 string) (map[string]map[string]T, error) {
+	m := map[string]map[string]T{}
+	for _, value := range arr {
+		v := reflect.ValueOf(value)
+		if v.Kind() == reflect.Ptr {
+			if v.IsNil() {
+				// 处理 nil 指针的情况
+				return nil, fmt.Errorf("nil pointer for item %+v", value)
+			}
+			v = v.Elem()
+		}
+
+		field1 := v.FieldByName(keyName1)
+		if !field1.IsValid() {
+			return nil, fmt.Errorf("field not found: %s", keyName1)
+		}
+		field2 := v.FieldByName(keyName2)
+		if !field2.IsValid() {
+			return nil, fmt.Errorf("field not found: %s", keyName2)
+		}
+		key1 := fmt.Sprintf("%v", field1.Interface())
+		key2 := fmt.Sprintf("%v", field2.Interface())
+		mm, ok := m[key1]
+		if !ok {
+			mm = map[string]T{}
+			m[key1] = mm
+		}
+		mm[key2] = value
+	}
+	return m, nil
+}
+
 // ArrToMapStruct 数组转换为map，key为string，值为结构体
 func ArrToMapStruct[T any](arr []T, keyName string) (map[string]T, error) {
 	m := map[string]T{}

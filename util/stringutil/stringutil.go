@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -137,6 +138,27 @@ func IsTimeStringValid(timeString, format string) bool {
 		return false
 	}
 	return true
+}
+
+// IsNil 判断是否为空
+func IsNil(i interface{}) bool {
+	if i == nil {
+		return false
+	}
+	vi := reflect.ValueOf(i)
+	if vi.Kind() == reflect.Ptr {
+		return vi.IsNil()
+	}
+	return false
+}
+
+// GetJsonStrNilEmpty 获取json字符串
+func GetJsonStrNilEmpty(obj interface{}) string {
+	if IsNil(obj) {
+		return ""
+	}
+	c, _ := json.Marshal(obj)
+	return string(c)
 }
 
 // GetJsonStr 获取json字符串

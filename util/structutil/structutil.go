@@ -1,7 +1,27 @@
 // Package structutil structutil
 package structutil
 
-import "reflect"
+import (
+	"reflect"
+	"strings"
+)
+
+// GetStructArrName 提取类数组名称
+func GetStructArrName(i []interface{}) string {
+	if len(i) == 0 {
+		return ""
+	}
+	// 创建一个存放类名的字符串切片
+	names := make([]string, len(i))
+
+	// 遍历数组并提取每个元素的类名
+	for idx, v := range i {
+		names[idx] = GetStructName(v)
+	}
+
+	// 使用逗号将类名连接成字符串返回
+	return strings.Join(names, ",")
+}
 
 // GetStructName 提取类名称
 func GetStructName(i interface{}) string {

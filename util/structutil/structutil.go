@@ -7,19 +7,28 @@ import (
 )
 
 // GetStructArrName 提取类数组名称
-func GetStructArrName(i []interface{}) string {
-	if len(i) == 0 {
+func GetStructArrName(slice interface{}) string {
+	// 获取输入参数的反射值
+	val := reflect.ValueOf(slice)
+
+	// 检查输入是否为切片
+	if val.Kind() != reflect.Slice {
 		return ""
 	}
-	// 创建一个存放类名的字符串切片
-	names := make([]string, len(i))
 
-	// 遍历数组并提取每个元素的类名
-	for idx, v := range i {
-		names[idx] = GetStructName(v)
+	// 获取切片长度
+	length := val.Len()
+
+	// 创建一个字符串切片用于存储类名
+	names := make([]string, length)
+
+	// 遍历切片的每个元素
+	for i := 0; i < length; i++ {
+		elem := val.Index(i).Interface()
+		names[i] = GetStructName(elem)
 	}
 
-	// 使用逗号将类名连接成字符串返回
+	// 使用逗号连接类名并返回
 	return strings.Join(names, ",")
 }
 

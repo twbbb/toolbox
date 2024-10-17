@@ -1,3 +1,3 @@
-module git.woa.com/toolbox/th-go/constant/org
+module git.woa.com/th-go/toolbox/constant/org
 
 go 1.20

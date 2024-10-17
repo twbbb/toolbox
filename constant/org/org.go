@@ -2,18 +2,18 @@ package org
 
 // mapDataReq 请求参数
 const (
-	MAPREQ_AREACODE     = "areaCode"     // 区域编码
-	MAPREQ_SHOWALLENTRY = "showAllEntry" // true显示所有入口
-	MAPREQ_ORGTYPE      = "orgType"      // 医疗机构类型
-	MAPREQ_LEVEL        = "level"        // 医院等级
-	MAPREQ_ORGCATEGORY  = "orgCategory"  // 机构经营类别
-	MAPREQ_ACTIVITY     = "activity"     // 参与的活动
-	MAPREQ_LAT          = "lat"          // 纬度
-	MAPREQ_LNG          = "lng"          // 经度
-	MAPREQ_SORTTYPE     = "sortType"     // 排序类型
-	MAPREQ_EXAMPKG      = "examPkg"      // 体检套餐过滤
-	MAPREQ_TAGTYPE      = "tagType"      // 标签类型
-	MAPREQ_CFGBIZ       = "cfgBiz"       // 待获取的配置类型，逗号分隔
+	REQ_AREACODE     = "areaCode"     // 区域编码
+	REQ_SHOWALLENTRY = "showAllEntry" // true显示所有入口
+	REQ_ORGTYPE      = "orgType"      // 医疗机构类型
+	REQ_LEVEL        = "level"        // 医院等级
+	REQ_ORGCATEGORY  = "orgCategory"  // 机构经营类别
+	REQ_ACTIVITY     = "activity"     // 参与的活动
+	REQ_LAT          = "lat"          // 纬度
+	REQ_LNG          = "lng"          // 经度
+	REQ_SORTTYPE     = "sortType"     // 排序类型
+	REQ_EXAMPKG      = "examPkg"      // 体检套餐过滤
+	REQ_TAGTYPE      = "tagType"      // 标签类型
+	REQ_CFGBIZ       = "cfgBiz"       // 待获取的配置类型，逗号分隔
 )
 
 // orgInfo 机构信息

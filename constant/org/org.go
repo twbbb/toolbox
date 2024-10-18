@@ -14,6 +14,8 @@ const (
 	REQ_EXAMPKG      = "examPkg"      // 体检套餐过滤
 	REQ_TAGTYPE      = "tagType"      // 标签类型
 	REQ_CFGBIZ       = "cfgBiz"       // 待获取的配置类型，逗号分隔
+	// 入口名称，注意优先使用的map外的EntryFilter。register 预约挂号；examination 体检；healthcare 消费医疗；vaccination 疫苗
+	REQ_ENTRYID = "entryId"
 )
 
 // orgInfo 机构信息

@@ -19,6 +19,7 @@ const (
 // orgInfo 机构信息
 const (
 	ORGINFO_CITYCODE        = "cityCode"        // 城市代码
+	ORGINFO_CITYNAME        = "cityName"        // 城市名称
 	ORGINFO_AREACODE        = "areaCode"        // 区域代码
 	ORGINFO_ORGID           = "orgId"           // 医疗机构ID
 	ORGINFO_ORGTYPE         = "orgType"         // 医疗机构类型

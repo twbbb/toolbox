@@ -14,6 +14,14 @@ import (
 	"time"
 )
 
+// TruncateString trims the input string to the specified length.
+func TruncateString(input string, maxLength int) string {
+	if len(input) > maxLength {
+		return input[:maxLength]
+	}
+	return input
+}
+
 // MD5Hash 获取md5的数据
 func MD5Hash(str string) string {
 	hash := md5.New()

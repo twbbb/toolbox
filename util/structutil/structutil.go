@@ -70,3 +70,38 @@ func CopyFields(src interface{}, dst interface{}) {
 		}
 	}
 }
+
+// CopyFieldsByParamKey 复制数据
+func CopyFieldsByParamKey(src interface{}, dst interface{}, reqParamKey []string) []string {
+	errKey := []string{}
+	if src == nil {
+		return errKey
+	}
+	srcValue := reflect.ValueOf(src)
+	dstValue := reflect.ValueOf(dst)
+
+	if srcValue.Kind() == reflect.Ptr {
+		srcValue = srcValue.Elem()
+	}
+
+	if dstValue.Kind() == reflect.Ptr {
+		dstValue = dstValue.Elem()
+	}
+
+	for _, key := range reqParamKey {
+		srcField := srcValue.FieldByName(key)
+		dstField := dstValue.FieldByName(key)
+
+		if srcField.IsValid() && dstField.IsValid() && dstField.CanSet() {
+			// 检查字段类型是否相同
+			if srcField.Type() == dstField.Type() {
+				dstField.Set(srcField)
+			} else {
+				errKey = append(errKey, key)
+			}
+		} else {
+			errKey = append(errKey, key)
+		}
+	}
+	return errKey
+}

@@ -1,3 +1,4 @@
+// Package task 定时任务
 package task
 
 import (
@@ -43,7 +44,7 @@ func GetDefaultTaskDistributFunc(
 	return taskFunc
 }
 
-// 执行分布式定时任务
+// DoDistributTask 执行分布式定时任务
 func DoDistributTask(taskFunc entity.TaskDistributFunc) error {
 	initRequestId := fmt.Sprintf("%s_%d", taskFunc.TaskName, 0)
 	if taskFunc.InitStart {

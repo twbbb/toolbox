@@ -1,3 +1,4 @@
+// Package task 定时任务
 package task
 
 import (
@@ -20,6 +21,7 @@ func InitCacheTicker(runFunc func(ctx context.Context) error, taskName string, s
 	return DoTask(taskFunc)
 }
 
+// GetDefaultTaskFunc 获取默认的taskFunc
 func GetDefaultTaskFunc(runFunc func(ctx context.Context) error, taskName string, secondDuration int) entity.TaskFunc {
 	taskFunc := entity.TaskFunc{
 		TaskName:     taskName,

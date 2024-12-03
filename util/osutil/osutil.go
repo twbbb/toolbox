@@ -18,7 +18,7 @@ func GetPodIP() string {
 	return os.Getenv("POD_IP")
 }
 
-// listenForSIGTERM 启动一个 goroutine 来监听 SIGTERM 信号，并在收到信号时执行提供的回调函数。
+// ListenForSIGTERM 启动一个 goroutine 来监听 SIGTERM 信号，并在收到信号时执行提供的回调函数。
 func ListenForSIGTERM(ctx context.Context, cancel context.CancelFunc, callback func()) {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGTERM)

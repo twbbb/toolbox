@@ -1,3 +1,4 @@
+// Package org 机构
 package org
 
 // mapDataReq 请求参数
@@ -31,8 +32,6 @@ const (
 	ORGINFO_STATUS          = "status"          // 状态
 	ORGINFO_LOGOURL         = "logoUrl"         // logo地址
 	ORGINFO_ORGPHONE        = "orgPhone"        // 机构电话
-	ORGINFO_ISVIP           = "isVip"           // 是否为VIP医院
-	ORGINFO_HPVERSION       = "hpVersion"       // 机构主页版本
 	ORGINFO_ORGCLASS        = "orgClass"        // 机构性质
 	ORGINFO_ORGCATEGORY     = "orgCategory"     // 机构经营类别
 	ORGINFO_ORGCATEGORYNAME = "orgCategoryName" // 机构经营类别名

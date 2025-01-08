@@ -3,6 +3,14 @@ package distance
 
 import "math"
 
+// CalcDistanceCheck 计算距离
+func CalcDistanceCheck(lat, lng, orgLat, orgLng float64) int {
+	if lat == 0 || lng == 0 || orgLat == 0 || orgLng == 0 {
+		return 0
+	}
+	return CalcDistance(lat, lng, orgLat, orgLng)
+}
+
 // CalcDistance 计算距离
 func CalcDistance(lat, lng, orgLat, orgLng float64) int {
 	const earthRadius = 6378.138

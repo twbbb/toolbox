@@ -60,6 +60,11 @@ func (be *BizErr) addBizErr(startCode int, code int, msg string) error {
 	if err != nil {
 		return err
 	}
+	return be.AddCodeMsg(clientCode, msg)
+}
+
+// AddCodeMsg 增加错误码和错误
+func (be *BizErr) AddCodeMsg(clientCode int, msg string) error {
 	if msg == "" {
 		msg = "系统异常"
 	}
@@ -67,14 +72,22 @@ func (be *BizErr) addBizErr(startCode int, code int, msg string) error {
 	return nil
 }
 
+// GetCodeErr 获取code对应的错误
+func (be *BizErr) GetCodeErr(clientCode int) error {
+	if be.ErrMsgMap[clientCode] == "" {
+		return GetErr(ErrCodeErr)
+	}
+	return errs.New(clientCode, be.ErrMsgMap[clientCode])
+}
+
 // getBizErr 获取错误
 func (be *BizErr) getBizErr(startCode int, code int) error {
 	clientCodeStr := fmt.Sprintf("%d%03d%03d", startCode, be.BizType, code)
 	clientCode, err := stringToInt(clientCodeStr)
-	if err != nil || be.ErrMsgMap[clientCode] == "" {
-		return GetServerError("")
+	if err != nil {
+		return GetErr(ErrCodeErr)
 	}
-	return errs.New(clientCode, be.ErrMsgMap[clientCode])
+	return be.GetCodeErr(clientCode)
 }
 
 // stringToInt string转int

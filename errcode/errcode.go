@@ -30,6 +30,9 @@ const (
 
 	// ErrRPC 第三方调用返回错误
 	ErrRPC = 5000003
+
+	// ErrCodeErr 错误码异常
+	ErrCodeErr = 5000004
 )
 
 var errMsgMap map[int]string
@@ -43,6 +46,7 @@ func init() {
 		ErrRPC:        "远程调用异常",
 		ErrLogic:      "逻辑异常",
 		SUCCESS:       "成功",
+		ErrCodeErr:    "错误码异常",
 	}
 }
 

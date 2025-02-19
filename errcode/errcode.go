@@ -46,7 +46,7 @@ func init() {
 		ErrRPC:        "远程调用异常",
 		ErrLogic:      "逻辑异常",
 		SUCCESS:       "成功",
-		ErrCodeErr:    "错误码异常",
+		ErrCodeErr:    "错误异常",
 	}
 }
 

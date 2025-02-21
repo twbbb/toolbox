@@ -19,6 +19,9 @@ const (
 	// ErrEmptySthid sthid为空
 	ErrEmptySthid = 4000001
 
+	// ErrDuplicateReq 重复请求
+	ErrDuplicateReq = 4000002
+
 	// ErrServer 服务内部错误
 	ErrServer = 5000000
 
@@ -39,14 +42,15 @@ var errMsgMap map[int]string
 
 func init() {
 	errMsgMap = map[int]string{
-		ErrDBExec:     "数据操作异常",
-		ErrEmptySthid: "sthid为空",
-		ErrReqParams:  "请求异常",
-		ErrServer:     "系统异常",
-		ErrRPC:        "远程调用异常",
-		ErrLogic:      "逻辑异常",
-		SUCCESS:       "成功",
-		ErrCodeErr:    "错误异常",
+		ErrDBExec:       "数据操作异常",
+		ErrEmptySthid:   "sthid为空",
+		ErrReqParams:    "请求异常",
+		ErrServer:       "系统异常",
+		ErrRPC:          "远程调用异常",
+		ErrLogic:        "逻辑异常",
+		SUCCESS:         "成功",
+		ErrCodeErr:      "错误异常",
+		ErrDuplicateReq: "请求还在处理中",
 	}
 }
 

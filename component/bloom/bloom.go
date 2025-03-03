@@ -12,8 +12,8 @@ import (
 
 // BitSetProvider bit存储提供者
 type BitSetProvider interface {
-	Set([]uint) error
-	Test([]uint) (bool, error)
+	Set(ctx context.Context, location []uint) error
+	Test(ctx context.Context, location []uint) (bool, error)
 }
 
 // BloomFilter 布隆过滤
@@ -59,9 +59,9 @@ func EstimateParameters(n uint, p float64) (uint, uint) {
 }
 
 // Add 添加
-func (f *BloomFilter) Add(data []byte) error {
+func (f *BloomFilter) Add(ctx context.Context, data []byte) error {
 	locations := f.getLocations(data)
-	err := f.bitSet.Set(locations)
+	err := f.bitSet.Set(ctx, locations)
 	if err != nil {
 		return err
 	}
@@ -69,9 +69,9 @@ func (f *BloomFilter) Add(data []byte) error {
 }
 
 // Exists 是否存在
-func (f *BloomFilter) Exists(data []byte) (bool, error) {
+func (f *BloomFilter) Exists(ctx context.Context, data []byte) (bool, error) {
 	locations := f.getLocations(data)
-	isSet, err := f.bitSet.Test(locations)
+	isSet, err := f.bitSet.Test(ctx, locations)
 	if err != nil {
 		return false, err
 	}

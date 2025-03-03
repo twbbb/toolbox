@@ -19,8 +19,7 @@ func NewRedisBitSet(keyPrefix string, client *redis.Client) *RedisBitSet {
 }
 
 // Set 设置
-func (r *RedisBitSet) Set(offsets []uint) error {
-	ctx := context.Background()
+func (r *RedisBitSet) Set(ctx context.Context, offsets []uint) error {
 	for _, offset := range offsets {
 		key, thisOffset := r.getKeyOffset(offset)
 		_, err := r.client.SetBit(ctx, key, int64(thisOffset), 1).Result()
@@ -33,8 +32,7 @@ func (r *RedisBitSet) Set(offsets []uint) error {
 }
 
 // Test 测试是否存在
-func (r *RedisBitSet) Test(offsets []uint) (bool, error) {
-	ctx := context.Background()
+func (r *RedisBitSet) Test(ctx context.Context, offsets []uint) (bool, error) {
 	for _, offset := range offsets {
 		key, thisOffset := r.getKeyOffset(offset)
 		bitValue, err := r.client.GetBit(ctx, key, int64(thisOffset)).Result()

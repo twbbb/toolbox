@@ -11,7 +11,8 @@ import (
 type BizErrType int
 
 const (
-	JING_QI BizErrType = 1
+	JING_QI      BizErrType = 1 // 经期
+	CUST_SUPPORT BizErrType = 2 // 反馈平台
 )
 
 // GetBizErr 获取错误

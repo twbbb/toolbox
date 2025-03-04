@@ -57,6 +57,10 @@ func GetChannel(ctx context.Context) string {
 	return getStrFromCtx(ctx, "channel")
 }
 
+// SetSthid context中设置Sthid
+func SetSthid(ctx context.Context, sthid string) {
+	trpc.SetMetaData(ctx, "sthid", []byte(sthid))
+}
 func getStrFromCtx(ctx context.Context, label string) string {
 	if value := trpc.GetMetaData(ctx, label); value != nil {
 		return string(value)

@@ -11,8 +11,7 @@ var (
 	once            sync.Once
 )
 
-// GetBeijingLocation 获取北京时区
-func GetBeijingLocation() *time.Location {
+func init() {
 	once.Do(
 		func() {
 			var err error
@@ -24,6 +23,11 @@ func GetBeijingLocation() *time.Location {
 			}
 		},
 	)
+}
+
+// GetBeijingLocation 获取北京时区
+func GetBeijingLocation() *time.Location {
+
 	return beijingLocation
 }
 

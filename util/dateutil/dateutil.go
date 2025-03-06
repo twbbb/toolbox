@@ -89,5 +89,5 @@ func BeijingDefaultParse(t string) (time.Time, error) {
 
 // BeijingParseByFormat 格式化
 func BeijingParseByFormat(format string, t string) (time.Time, error) {
-	return time.ParseInLocation(t, format, beijingLocation)
+	return time.ParseInLocation(format, t, beijingLocation)
 }

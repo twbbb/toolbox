@@ -54,3 +54,25 @@ type TaskDistributFunc struct {
 	// 上报名称
 	ReportName string
 }
+
+// TaskPlatformFunc 平台定时任务结构体
+type TaskPlatformFunc struct {
+	// 任务名称
+	TaskName string `json:"taskName"`
+	// 透传到定时任务的信息
+	TransformMsg string `json:"transformMsg"`
+	// 分布式锁的basekey
+	BaseLockKey string `json:"baseLockKey"`
+	// 加锁的key,没有则不加锁
+	LockKey string `json:"lockKey"`
+	// 默认加锁的时间,单位为秒
+	LockTime int `json:"lockTime"`
+	// 运行时间超过这个限制则进行告警，单位为s
+	AlarmTimeSec int `json:"alarmTimeSec"`
+	// 告警的企业信息key
+	AlarmLink string `json:"alarmLink"`
+	// 分布式锁
+	DistributLock DistributLock
+	// Logger
+	Logger log.Logger
+}

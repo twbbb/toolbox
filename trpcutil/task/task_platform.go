@@ -59,7 +59,7 @@ func DoPlatformTask(ctx context.Context, msg string) (err error) {
 		log.ErrorContextf(ctx, "DoPlatformTask|DoTask|json 解析出现错误:%+v", err)
 		return err
 	}
-	log.InfoContextf(ctx, "DoPlatformTask|DoTask| taskDto:%s", jsonMarshal(taskDto))
+	log.InfoContextf(ctx, "DoPlatformTask|DoTask|taskDto:%s", jsonMarshal(taskDto))
 	go func() {
 		err = doTask(ctx, taskDto)
 	}()
@@ -84,7 +84,7 @@ func doTask(ctx context.Context, taskDto PlatformTaskDto) (err error) {
 
 	taskFunc := taskFuncs[taskDto.TaskName]
 	if taskFunc == nil {
-		log.ErrorContextf(ctx, "DoPlatformTask|DoTask| 未注册的任务:%s", taskDto.TaskName)
+		log.ErrorContextf(ctx, "DoPlatformTask|DoTask|未注册的任务:%s", taskDto.TaskName)
 		return
 	}
 	if taskDto.LockKey != "" && distributeLock != nil {
@@ -101,9 +101,9 @@ func doTask(ctx context.Context, taskDto PlatformTaskDto) (err error) {
 		return
 	}
 	monitor.ReportPlatformTask(taskDto.TaskName, true, getUseTime(start))
-	log.InfoContextf(newCtx, "DoTask|taskName:%s|info:%s|costTime:%s", taskDto.TaskName, taskDto.TransformMsg, time.Since(start))
+	log.InfoContextf(newCtx, "DoPlatformTask|DoTask|taskName:%s|info:%s|costTime:%s", taskDto.TaskName, taskDto.TransformMsg, time.Since(start))
 	if taskDto.AlarmTimeSec > 0 && time.Since(start).Seconds() > float64(taskDto.AlarmTimeSec) {
-		log.ErrorContextf(newCtx, "DoTask|taskName:%s|info:%s|cost:%v|超时告警", taskDto.TaskName, taskDto.TransformMsg, time.Since(start))
+		log.ErrorContextf(newCtx, "DoPlatformTask|DoTask|taskName:%s|info:%s|cost:%v|超时告警", taskDto.TaskName, taskDto.TransformMsg, time.Since(start))
 		robotAlarm(newCtx, taskDto, time.Since(start).String())
 	}
 	return err
@@ -114,10 +114,9 @@ func robotAlarm(ctx context.Context, taskDto PlatformTaskDto, userTime string) {
 		return
 	}
 	trpcMsg := trpc.Message(ctx)
-	service := trpcMsg.CalleeService()
-	server := trpcMsg.CalleeServer()
+	rpcName := trpcMsg.ServerRPCName()
 	ip := trpc.GlobalConfig().Global.LocalIP
-	msg := fmt.Sprintf("server:%s,service:%s,ip:%s,taskName:%s,info:%s,cost:%s, 超过了设置的默认告警时间%d", server, service, ip, taskDto.TaskName, taskDto.TransformMsg, userTime, taskDto.AlarmTimeSec)
+	msg := fmt.Sprintf("rpcName:%s,ip:%s,taskName:%s,cost:%s, 超过了设置的默认告警时间%d", rpcName, ip, taskDto.TaskName, userTime, taskDto.AlarmTimeSec)
 	values := entity.RobotSendReq{
 		Msgtype: "markdown",
 		Markdown: entity.Markdown{
@@ -132,7 +131,7 @@ func robotAlarm(ctx context.Context, taskDto PlatformTaskDto, userTime string) {
 		bytes.NewBuffer(jsonValue),
 	)
 	if err != nil {
-		log.ErrorContextf(ctx, "robotSendMDAlarm|err:%v", err)
+		log.ErrorContextf(ctx, "DoPlatformTask|robotSendMDAlarm|err:%v", err)
 	}
 }
 

@@ -2,17 +2,23 @@
 package task
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"git.code.oa.com/trpc-go/trpc-go"
 	"git.code.oa.com/trpc-go/trpc-go/log"
 	"git.woa.com/th-go/toolbox/trpcutil/entity"
 	"git.woa.com/th-go/toolbox/trpcutil/monitor"
+	"net/http"
 	"runtime/debug"
 	"time"
 )
 
 // 使用示例：
+const (
+	webhookURL = "https://qyapi.weixin.qq.com/cgi-bin/webhook"
+)
 
 // PlatformTaskDto 定时任务相关
 type PlatformTaskDto struct {
@@ -98,16 +104,36 @@ func doTask(ctx context.Context, taskDto PlatformTaskDto) (err error) {
 	log.InfoContextf(newCtx, "DoTask|taskName:%s|info:%s|costTime:%s", taskDto.TaskName, taskDto.TransformMsg, time.Since(start))
 	if taskDto.AlarmTimeSec > 0 && time.Since(start).Seconds() > float64(taskDto.AlarmTimeSec) {
 		log.ErrorContextf(newCtx, "DoTask|taskName:%s|info:%s|cost:%v|超时告警", taskDto.TaskName, taskDto.TransformMsg, time.Since(start))
-		robotAlarm(newCtx, taskDto)
+		robotAlarm(newCtx, taskDto, time.Since(start).String())
 	}
 	return err
 }
 
-func robotAlarm(ctx context.Context, taskDto PlatformTaskDto) {
+func robotAlarm(ctx context.Context, taskDto PlatformTaskDto, userTime string) {
 	if taskDto.RobotLink == "" {
 		return
 	}
-	// todo 机器人告警
+	trpcMsg := trpc.Message(ctx)
+	service := trpcMsg.CalleeService()
+	server := trpcMsg.CalleeServer()
+	ip := trpc.GlobalConfig().Global.LocalIP
+	msg := fmt.Sprintf("server:%s,service:%s,ip:%s,taskName:%s,info:%s,cost:%s, 超过了设置的默认告警时间%d", server, service, ip, taskDto.TaskName, taskDto.TransformMsg, userTime, taskDto.AlarmTimeSec)
+	values := entity.RobotSendReq{
+		Msgtype: "markdown",
+		Markdown: entity.Markdown{
+			Content: msg,
+		},
+	}
+	jsonValue, _ := json.Marshal(values)
+	robotHookURL := fmt.Sprintf("%s/send?key=%s", webhookURL, taskDto.RobotLink)
+	_, err := http.Post(
+		robotHookURL,
+		"application/json",
+		bytes.NewBuffer(jsonValue),
+	)
+	if err != nil {
+		log.ErrorContextf(ctx, "robotSendMDAlarm|err:%v", err)
+	}
 }
 
 func getWithCanCelContext(ctx context.Context, dto PlatformTaskDto) (newCtx context.Context, cancel context.CancelFunc) {

@@ -118,7 +118,7 @@ func robotAlarm(ctx context.Context, taskDto PlatformTaskDto, userTime string) {
 	trpcMsg := trpc.Message(ctx)
 	rpcName := trpcMsg.ServerRPCName()
 	ip := trpc.GlobalConfig().Global.LocalIP
-	msg := fmt.Sprintf("rpcName:%s,ip:%s,taskName:%s,cost:%s, 超过了设置的默认告警时间%d", rpcName, ip, taskDto.TaskName, userTime, taskDto.AlarmTimeSec)
+	msg := fmt.Sprintf("rpcName:%s,ip:%s,taskName:%s,cost:%s, 超过了设置的默认告警时间%ds", rpcName, ip, taskDto.TaskName, userTime, taskDto.AlarmTimeSec)
 	values := entity.RobotSendReq{
 		Msgtype: "markdown",
 		Markdown: entity.Markdown{

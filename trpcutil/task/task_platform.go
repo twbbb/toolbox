@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"git.code.oa.com/trpc-go/trpc-go"
-	"git.code.oa.com/trpc-go/trpc-go/codec"
 	"git.code.oa.com/trpc-go/trpc-go/log"
 	"git.woa.com/th-go/toolbox/trpcutil/entity"
 	"git.woa.com/th-go/toolbox/trpcutil/monitor"
@@ -139,8 +138,8 @@ func robotAlarm(ctx context.Context, taskDto PlatformTaskDto, markMsg string) {
 }
 
 func getWithCanCelContext(ctx context.Context, dto PlatformTaskDto) (newCtx context.Context, cancel context.CancelFunc) {
-	ctx, _ = codec.WithCloneContextAndMessage(ctx)
-	//newCtx = trpc.CloneContext(ctx)
+	//ctx, _ = codec.WithCloneContextAndMessage(ctx)
+	ctx = trpc.CloneContext(ctx)
 	if dto.TimeoutCtx > 0 {
 		ctx, cancel = context.WithTimeout(ctx, time.Duration(dto.TimeoutCtx)*time.Minute)
 	} else {

@@ -92,6 +92,7 @@ func doTask(ctx context.Context, taskDto PlatformTaskDto) (err error) {
 		lock := distributeLock.Lock(ctx, taskDto.LockKey, time.Duration(taskDto.LockTime)*time.Second)
 		if !lock {
 			log.ErrorContextf(ctx, "DoPlatformTask|DoTask| 获取锁失败:%s", taskDto.LockKey)
+			robotAlarm(ctx, taskDto, fmt.Sprintf(",获取锁失败:%s", taskDto.LockKey))
 			monitor.ReportPlatformTask(taskDto.TaskName, false, getUseTime(start))
 			return
 		}
@@ -106,19 +107,19 @@ func doTask(ctx context.Context, taskDto PlatformTaskDto) (err error) {
 	log.InfoContextf(ctx, "DoPlatformTask|DoTask|taskName:%s|costTime:%s|info:%s", taskDto.TaskName, time.Since(start), taskDto.TransformMsg)
 	if taskDto.AlarmTimeSec > 0 && time.Since(start).Seconds() > float64(taskDto.AlarmTimeSec) {
 		log.ErrorContextf(ctx, "DoPlatformTask|DoTask|taskName:%s|cost:%v|info:%s|超时告警", taskDto.TaskName, time.Since(start), taskDto.TransformMsg)
-		robotAlarm(ctx, taskDto, time.Since(start).String())
+		robotAlarm(ctx, taskDto, fmt.Sprintf(",耗时:%s,超过了设置的默认告警时间%ds", time.Since(start).String(), taskDto.AlarmTimeSec))
 	}
 	return err
 }
 
-func robotAlarm(ctx context.Context, taskDto PlatformTaskDto, userTime string) {
+func robotAlarm(ctx context.Context, taskDto PlatformTaskDto, markMsg string) {
 	if taskDto.RobotLink == "" {
 		return
 	}
 	trpcMsg := trpc.Message(ctx)
 	rpcName := trpcMsg.ServerRPCName()
 	ip := trpc.GlobalConfig().Global.LocalIP
-	msg := fmt.Sprintf("rpcName:%s,ip:%s,taskName:%s,cost:%s, 超过了设置的默认告警时间%ds", rpcName, ip, taskDto.TaskName, userTime, taskDto.AlarmTimeSec)
+	msg := fmt.Sprintf("rpcName:%s,ip:%s,taskName:%s,%s", rpcName, ip, taskDto.TaskName, markMsg)
 	values := entity.RobotSendReq{
 		Msgtype: "markdown",
 		Markdown: entity.Markdown{

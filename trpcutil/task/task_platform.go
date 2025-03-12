@@ -61,12 +61,12 @@ func DoPlatformTask(ctx context.Context, msg string) (err error) {
 		return err
 	}
 	log.InfoContextf(ctx, "DoPlatformTask|DoTask|taskDto:%s", jsonMarshal(taskDto))
-	go func(ctx context.Context) {
-		newCtx, cancel := getWithCanCelContext(ctx, taskDto)
-		// 确保上下文在函数退出时取消
-		defer cancel()
+	newCtx, cancel := getWithCanCelContext(ctx, taskDto)
+	// 确保上下文在函数退出时取消
+	defer cancel()
+	go func() {
 		err = doTask(newCtx, taskDto)
-	}(ctx)
+	}()
 	return
 }
 

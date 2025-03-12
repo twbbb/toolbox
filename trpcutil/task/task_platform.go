@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"git.code.oa.com/trpc-go/trpc-go"
+	"git.code.oa.com/trpc-go/trpc-go/codec"
 	"git.code.oa.com/trpc-go/trpc-go/log"
 	"git.woa.com/th-go/toolbox/trpcutil/entity"
 	"git.woa.com/th-go/toolbox/trpcutil/monitor"
@@ -60,17 +61,18 @@ func DoPlatformTask(ctx context.Context, msg string) (err error) {
 		return err
 	}
 	log.InfoContextf(ctx, "DoPlatformTask|DoTask|taskDto:%s", jsonMarshal(taskDto))
-	go func() {
-		err = doTask(ctx, taskDto)
-	}()
+	go func(ctx context.Context) {
+		newCtx, cancel := getWithCanCelContext(ctx, taskDto)
+		// 确保上下文在函数退出时取消
+		defer cancel()
+		err = doTask(newCtx, taskDto)
+	}(ctx)
 	return
 }
 
 // doTask 处理任务
 func doTask(ctx context.Context, taskDto PlatformTaskDto) (err error) {
 	start := time.Now()
-	newCtx, cancel := getWithCanCelContext(ctx, taskDto)
-
 	// 处理异常情况
 	defer func() {
 		if p := recover(); p != nil {
@@ -78,8 +80,7 @@ func doTask(ctx context.Context, taskDto PlatformTaskDto) (err error) {
 			debug.PrintStack()
 			monitor.ReportPlatformTask(taskDto.TaskName, false, getUseTime(start))
 		}
-		// 确保上下文在函数退出时取消
-		cancel()
+
 	}()
 
 	taskFunc := taskFuncs[taskDto.TaskName]
@@ -88,23 +89,24 @@ func doTask(ctx context.Context, taskDto PlatformTaskDto) (err error) {
 		return
 	}
 	if taskDto.LockKey != "" && distributeLock != nil {
-		lock := distributeLock.Lock(newCtx, taskDto.LockKey, time.Duration(taskDto.LockTime)*time.Second)
+		lock := distributeLock.Lock(ctx, taskDto.LockKey, time.Duration(taskDto.LockTime)*time.Second)
 		if !lock {
 			log.ErrorContextf(ctx, "DoPlatformTask|DoTask| 获取锁失败:%s", taskDto.LockKey)
+			monitor.ReportPlatformTask(taskDto.TaskName, false, getUseTime(start))
 			return
 		}
-		defer distributeLock.UnLock(newCtx, taskDto.LockKey)
+		defer distributeLock.UnLock(ctx, taskDto.LockKey)
 	}
-	err = taskFunc(newCtx, taskDto.TransformMsg)
+	err = taskFunc(ctx, taskDto.TransformMsg)
 	if err != nil {
 		log.ErrorContextf(ctx, "DoPlatformTask|DoTask| 任务执行出现错误:%s|err:%+v", taskDto.TaskName, err)
 		return
 	}
 	monitor.ReportPlatformTask(taskDto.TaskName, true, getUseTime(start))
-	log.InfoContextf(newCtx, "DoPlatformTask|DoTask|taskName:%s|info:%s|costTime:%s", taskDto.TaskName, taskDto.TransformMsg, time.Since(start))
+	log.InfoContextf(ctx, "DoPlatformTask|DoTask|taskName:%s|costTime:%s|info:%s", taskDto.TaskName, time.Since(start), taskDto.TransformMsg)
 	if taskDto.AlarmTimeSec > 0 && time.Since(start).Seconds() > float64(taskDto.AlarmTimeSec) {
-		log.ErrorContextf(newCtx, "DoPlatformTask|DoTask|taskName:%s|info:%s|cost:%v|超时告警", taskDto.TaskName, taskDto.TransformMsg, time.Since(start))
-		robotAlarm(newCtx, taskDto, time.Since(start).String())
+		log.ErrorContextf(ctx, "DoPlatformTask|DoTask|taskName:%s|cost:%v|info:%s|超时告警", taskDto.TaskName, time.Since(start), taskDto.TransformMsg)
+		robotAlarm(ctx, taskDto, time.Since(start).String())
 	}
 	return err
 }
@@ -136,13 +138,14 @@ func robotAlarm(ctx context.Context, taskDto PlatformTaskDto, userTime string) {
 }
 
 func getWithCanCelContext(ctx context.Context, dto PlatformTaskDto) (newCtx context.Context, cancel context.CancelFunc) {
-	newCtx = trpc.CloneContext(ctx)
+	ctx, _ = codec.WithCloneContextAndMessage(ctx)
+	//newCtx = trpc.CloneContext(ctx)
 	if dto.TimeoutCtx > 0 {
-		newCtx, cancel = context.WithTimeout(newCtx, time.Duration(dto.TimeoutCtx)*time.Minute)
+		ctx, cancel = context.WithTimeout(ctx, time.Duration(dto.TimeoutCtx)*time.Minute)
 	} else {
-		newCtx, cancel = context.WithCancel(newCtx)
+		ctx, cancel = context.WithCancel(ctx)
 	}
-	return newCtx, cancel
+	return ctx, cancel
 }
 
 // JsonMarshal , 变为json

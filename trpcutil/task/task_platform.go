@@ -20,22 +20,8 @@ const (
 	webhookURL = "https://qyapi.weixin.qq.com/cgi-bin/webhook"
 )
 
-// PlatformTaskDto 定时任务相关
-type PlatformTaskDto struct {
-	TaskName     string `json:"taskName"`
-	TransformMsg string `json:"transformMsg"` // 透传到定时任务的信息
-	LockKey      string `json:"lockKey"`      // 加锁的key,没有则不加锁
-	LockTime     int    `json:"lockTime"`     // 默认加锁的时间,单位为秒
-	TimeoutCtx   int    `json:"timeoutCtx"`   // 任务超时时间，单位为min，默认没有超时时间
-	AlarmTimeSec int    `json:"alarmTimeSec"` // 运行时间超过这个限制则进行告警，单位为s
-	RobotLink    string `json:"robotLink"`    // 运行时间超过这个限制则进行企业微信告警
-}
-
-// PlatformTaskFunc 定义消息处理函数类型
-type PlatformTaskFunc func(ctx context.Context, data string) error
-
 var distributeLock entity.DistributLock
-var taskFuncs = map[string]PlatformTaskFunc{}
+var taskFuncs = map[string]*entity.PlatformTask{}
 
 // InitDistributeLock 初始化分布式锁
 func InitDistributeLock(lock entity.DistributLock) {
@@ -43,17 +29,33 @@ func InitDistributeLock(lock entity.DistributLock) {
 }
 
 // AddTask 添加任务
-func AddTask(taskNam string, taskFunc PlatformTaskFunc) {
+func AddTask(taskNam string, taskFunc entity.PlatformTaskFunc) {
 	if taskFuncs[taskNam] != nil {
 		log.Errorf("DoPlatformTask|AddTask| 重复注册任务:%s", taskNam)
 		return
 	}
-	taskFuncs[taskNam] = taskFunc
+	taskFuncs[taskNam] = &entity.PlatformTask{
+		TaskName: taskNam,
+		Func:     taskFunc,
+	}
+}
+
+// AddTaskWithReportCorn 添加任务并添加corn,corn会上报到智妍
+func AddTaskWithReportCorn(taskNam string, taskFunc entity.PlatformTaskFunc, cornTime time.Duration) {
+	if taskFuncs[taskNam] != nil {
+		log.Errorf("DoPlatformTask|AddTask| 重复注册任务:%s", taskNam)
+		return
+	}
+	taskFuncs[taskNam] = &entity.PlatformTask{
+		TaskName: taskNam,
+		Func:     taskFunc,
+		CornTime: cornTime,
+	}
 }
 
 // DoPlatformTask 处理平台下发的任务
 func DoPlatformTask(ctx context.Context, msg string) (err error) {
-	var taskDto PlatformTaskDto
+	var taskDto entity.PlatformTaskDto
 	err = json.Unmarshal([]byte(msg), &taskDto)
 	if err != nil {
 		log.ErrorContextf(ctx, "DoPlatformTask|DoTask|json 解析出现错误:%+v", err)
@@ -70,14 +72,14 @@ func DoPlatformTask(ctx context.Context, msg string) (err error) {
 }
 
 // doTask 处理任务
-func doTask(ctx context.Context, taskDto PlatformTaskDto) (err error) {
+func doTask(ctx context.Context, taskDto entity.PlatformTaskDto) (err error) {
 	start := time.Now()
 	// 处理异常情况
 	defer func() {
 		if p := recover(); p != nil {
 			log.ErrorContextf(ctx, "DoPlatformTask|DoTask:%s|panic:%v,%s", taskDto.TaskName, p, debug.Stack())
 			debug.PrintStack()
-			monitor.ReportPlatformTask(taskDto.TaskName, false, getUseTime(start))
+			monitor.ReportPlatformTask(taskDto.TaskName, false, getUseTime(start), taskFuncs[taskDto.TaskName].CornTime)
 		}
 
 	}()
@@ -92,17 +94,17 @@ func doTask(ctx context.Context, taskDto PlatformTaskDto) (err error) {
 		if !lock {
 			log.ErrorContextf(ctx, "DoPlatformTask|DoTask| 获取锁失败:%s", taskDto.LockKey)
 			robotAlarm(ctx, taskDto, fmt.Sprintf(",获取锁失败:%s", taskDto.LockKey))
-			monitor.ReportPlatformTask(taskDto.TaskName, false, getUseTime(start))
+			monitor.ReportPlatformTask(taskDto.TaskName, false, getUseTime(start), taskFuncs[taskDto.TaskName].CornTime)
 			return
 		}
 		defer distributeLock.UnLock(ctx, taskDto.LockKey)
 	}
-	err = taskFunc(ctx, taskDto.TransformMsg)
+	err = taskFunc.Func(ctx, taskDto.TransformMsg)
 	if err != nil {
 		log.ErrorContextf(ctx, "DoPlatformTask|DoTask| 任务执行出现错误:%s|err:%+v", taskDto.TaskName, err)
 		return
 	}
-	monitor.ReportPlatformTask(taskDto.TaskName, true, getUseTime(start))
+	monitor.ReportPlatformTask(taskDto.TaskName, true, getUseTime(start), taskFuncs[taskDto.TaskName].CornTime)
 	log.InfoContextf(ctx, "DoPlatformTask|DoTask|taskName:%s|costTime:%s|info:%s", taskDto.TaskName, time.Since(start), taskDto.TransformMsg)
 	if taskDto.AlarmTimeSec > 0 && time.Since(start).Seconds() > float64(taskDto.AlarmTimeSec) {
 		log.ErrorContextf(ctx, "DoPlatformTask|DoTask|taskName:%s|cost:%v|info:%s|超时告警", taskDto.TaskName, time.Since(start), taskDto.TransformMsg)
@@ -111,7 +113,7 @@ func doTask(ctx context.Context, taskDto PlatformTaskDto) (err error) {
 	return err
 }
 
-func robotAlarm(ctx context.Context, taskDto PlatformTaskDto, markMsg string) {
+func robotAlarm(ctx context.Context, taskDto entity.PlatformTaskDto, markMsg string) {
 	if taskDto.RobotLink == "" {
 		return
 	}
@@ -137,7 +139,7 @@ func robotAlarm(ctx context.Context, taskDto PlatformTaskDto, markMsg string) {
 	}
 }
 
-func getWithCanCelContext(ctx context.Context, dto PlatformTaskDto) (newCtx context.Context, cancel context.CancelFunc) {
+func getWithCanCelContext(ctx context.Context, dto entity.PlatformTaskDto) (newCtx context.Context, cancel context.CancelFunc) {
 	//ctx, _ = codec.WithCloneContextAndMessage(ctx)
 	ctx = trpc.CloneContext(ctx)
 	if dto.TimeoutCtx > 0 {

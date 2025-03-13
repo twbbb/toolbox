@@ -55,24 +55,23 @@ type TaskDistributFunc struct {
 	ReportName string
 }
 
-// TaskPlatformFunc 平台定时任务结构体
-type TaskPlatformFunc struct {
-	// 任务名称
-	TaskName string `json:"taskName"`
-	// 透传到定时任务的信息
-	TransformMsg string `json:"transformMsg"`
-	// 分布式锁的basekey
-	BaseLockKey string `json:"baseLockKey"`
-	// 加锁的key,没有则不加锁
-	LockKey string `json:"lockKey"`
-	// 默认加锁的时间,单位为秒
-	LockTime int `json:"lockTime"`
-	// 运行时间超过这个限制则进行告警，单位为s
-	AlarmTimeSec int `json:"alarmTimeSec"`
-	// 告警的企业信息key
-	AlarmLink string `json:"alarmLink"`
-	// 分布式锁
-	DistributLock DistributLock
-	// Logger
-	Logger log.Logger
+// PlatformTaskDto 定时任务平台消息传递
+type PlatformTaskDto struct {
+	TaskName     string `json:"taskName"`
+	TransformMsg string `json:"transformMsg"` // 透传到定时任务的信息
+	LockKey      string `json:"lockKey"`      // 加锁的key,没有则不加锁
+	LockTime     int    `json:"lockTime"`     // 默认加锁的时间,单位为秒
+	TimeoutCtx   int    `json:"timeoutCtx"`   // 任务超时时间，单位为min，默认没有超时时间
+	AlarmTimeSec int    `json:"alarmTimeSec"` // 运行时间超过这个限制则进行告警，单位为s
+	RobotLink    string `json:"robotLink"`    // 运行时间超过这个限制则进行企业微信告警
+}
+
+// PlatformTaskFunc 定时任务平台消息传递消息处理函数类型
+type PlatformTaskFunc func(ctx context.Context, data string) error
+
+// PlatformTask 定时任务平台消息传递消息处理结构体
+type PlatformTask struct {
+	TaskName string
+	Func     PlatformTaskFunc
+	CornTime time.Duration
 }

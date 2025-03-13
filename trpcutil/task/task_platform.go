@@ -40,8 +40,8 @@ func AddTask(taskNam string, taskFunc entity.PlatformTaskFunc) {
 	}
 }
 
-// AddTaskWithReportCorn 添加任务并添加corn,corn会上报到智妍
-func AddTaskWithReportCorn(taskNam string, taskFunc entity.PlatformTaskFunc, cornTime time.Duration) {
+// AddTaskWithReportCorn 添加任务并添加corn,corn("0 0 1 * * *")会上报到智妍
+func AddTaskWithReportCorn(taskNam string, taskFunc entity.PlatformTaskFunc, cornTime string) {
 	if taskFuncs[taskNam] != nil {
 		log.Errorf("DoPlatformTask|AddTask| 重复注册任务:%s", taskNam)
 		return

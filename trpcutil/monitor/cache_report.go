@@ -5,7 +5,6 @@ import (
 	"git.code.oa.com/trpc-go/trpc-go"
 	"git.code.oa.com/trpc-go/trpc-go/log"
 	"git.code.oa.com/trpc-go/trpc-go/metrics"
-	"time"
 )
 
 // ReportCache ...
@@ -39,13 +38,13 @@ func ReportCache(requestId string, reportName string, biz string, suc bool, cost
 	}
 }
 
-func ReportPlatformTask(funcName string, suc bool, costTms float64, cornTime time.Duration) {
+func ReportPlatformTask(funcName string, suc bool, costTms float64, cornTime string) {
 	dims := make([]*metrics.Dimension, 0, 5)
 	dims = append(dims, &metrics.Dimension{Name: "env", Value: trpc.GlobalConfig().Global.EnvName})
 	dims = append(dims, &metrics.Dimension{Name: "srcContain", Value: trpc.GlobalConfig().Global.ContainerName})
 	dims = append(dims, &metrics.Dimension{Name: "srcIP", Value: trpc.GlobalConfig().Global.LocalIP})
 	dims = append(dims, &metrics.Dimension{Name: "funName", Value: funcName})
-	dims = append(dims, &metrics.Dimension{Name: "cornTime", Value: cornTime.String()})
+	dims = append(dims, &metrics.Dimension{Name: "cornTime", Value: cornTime})
 
 	datas := make([]*metrics.Metrics, 0, 5)
 	datas = append(datas, metrics.NewMetrics("allCount", 1, metrics.PolicySUM))

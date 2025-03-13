@@ -24,7 +24,7 @@ func Init() error {
 
     task.AddTaskWithReportCorn("test2", func(ctx context.Context, data string) error {
         return service.test2(ctx)
-    }, time.Duration(11)*time.Second)
+    }, "0 0 1 * * *")
 	return nil
 }
 ```

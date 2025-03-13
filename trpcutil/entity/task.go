@@ -73,5 +73,5 @@ type PlatformTaskFunc func(ctx context.Context, data string) error
 type PlatformTask struct {
 	TaskName string
 	Func     PlatformTaskFunc
-	CornTime time.Duration
+	CornTime string
 }

@@ -7,14 +7,14 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// TaskRedisLock 定时任务redis锁
-type TaskRedisLock struct {
+// RedisLock 任务redis锁
+type RedisLock struct {
 	// redis客户端
 	Client *redis.Client
 }
 
 // Lock 分布式锁
-func (rc *TaskRedisLock) Lock(ctx context.Context, key string, expiration time.Duration) bool {
+func (rc *RedisLock) Lock(ctx context.Context, key string, expiration time.Duration) bool {
 	bool, err := rc.Client.SetNX(ctx, key, "1", expiration).Result()
 	if err != nil {
 		return false
@@ -23,7 +23,7 @@ func (rc *TaskRedisLock) Lock(ctx context.Context, key string, expiration time.D
 }
 
 // UnLock 分布式锁解锁
-func (rc *TaskRedisLock) UnLock(ctx context.Context, key string) bool {
+func (rc *RedisLock) UnLock(ctx context.Context, key string) bool {
 	_, err := rc.Client.Del(ctx, key).Result()
 	if err != nil {
 		return false

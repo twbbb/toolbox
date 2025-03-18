@@ -26,6 +26,11 @@ func logContext() filter.ServerFilter {
 			log.WithContextFields(ctx, "bizId", bizCheckInf.GetBizId())
 		}
 
+		patientIdInf, ok := req.(PatientIdInf)
+		if ok {
+			log.WithContextFields(ctx, "patientId", patientIdInf.GetPatientId())
+		}
+
 		return handler(ctx, req)
 	}
 }
@@ -33,6 +38,11 @@ func logContext() filter.ServerFilter {
 // BizIdInf 定义一个接口
 type BizIdInf interface {
 	GetBizId() string
+}
+
+// PatientIdInf 定义一个接口
+type PatientIdInf interface {
+	GetPatientId() string
 }
 
 func init() {

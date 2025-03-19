@@ -64,6 +64,7 @@ type PlatformTaskDto struct {
 	TimeoutCtx   int    `json:"timeoutCtx"`   // 任务超时时间，单位为min，默认没有超时时间
 	AlarmTimeSec int    `json:"alarmTimeSec"` // 运行时间超过这个限制则进行告警，单位为s
 	RobotLink    string `json:"robotLink"`    // 运行时间超过这个限制则进行企业微信告警
+	Corn         string `json:"corn"`         // 任务的corn表达式，不影响调用，只是会上报到自定义监控
 }
 
 // PlatformTaskFunc 定时任务平台消息传递消息处理函数类型
@@ -73,5 +74,4 @@ type PlatformTaskFunc func(ctx context.Context, data string) error
 type PlatformTask struct {
 	TaskName string
 	Func     PlatformTaskFunc
-	CornTime string
 }

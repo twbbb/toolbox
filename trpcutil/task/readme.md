@@ -45,10 +45,6 @@ func Init() error {
 	task.AddTask("refreshGrayWenzhenDoctor", func(ctx context.Context, data string) error {
 		return service.RefreshGrayWenzhenDoctor(ctx)
 	})
-    // 添加test2定时任务。  字段"0 0 1 * * *"会上报至智妍方便查看每个定时任务什么时候执行
-    task.AddTaskWithReportCorn("test2", func(ctx context.Context, data string) error {
-        return service.test2(ctx)
-    }, "0 0 1 * * *")
 	return nil
 }
 ```
@@ -66,9 +62,14 @@ func (t *ThMedicalCenter) DoTask(ctx context.Context, req *pb.ReceiveMsgRequest)
 
 执行refreshAllLegoModules
 ```json
-{"taskName": "refreshAllLegoModules","lockKey": "SyncPublicPkgList_1000005891",
-  "lockTime": 30, "alarmTimeSec": 1, "robotLink": "0d9a679d-10f6-44fe-a210-37f0690bdb6e" }
+{"taskName": "refreshAllLegoModules" }
 ```
+
+执行refreshAllLegoModules， 并会把这个cron也上报到自定义监控，可以看方法同时看到此指标
+```json
+{"taskName": "refreshAllLegoModules", "cron": "0 0 1 * * *" }
+```
+
 
 执行refreshGrayWenzhenDoctor，并设置分布式锁lockKey,超过60s进行企业微信机器人告警(robotLink机器人，alarmTimeSec超时时间)
 ```json

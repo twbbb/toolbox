@@ -16,6 +16,17 @@ import (
 	"git.woa.com/th-go/toolbox/util/osutil"
 )
 
+// InitTaskTickerEnv 初始定时任务，包含env
+func InitTaskTickerEnv(
+	runFunc func(ctx context.Context) error, taskName string, secondDuration int, baseLockKey string,
+	lock entity.DistributLock,
+) error {
+	if trpc.GlobalConfig() != nil && trpc.GlobalConfig().Global.EnvName != "" {
+		baseLockKey = baseLockKey + ":" + trpc.GlobalConfig().Global.EnvName
+	}
+	return InitTaskTicker(runFunc, taskName, secondDuration, baseLockKey, lock)
+}
+
 // InitTaskTicker 初始定时任务
 func InitTaskTicker(
 	runFunc func(ctx context.Context) error, taskName string, secondDuration int, baseLockKey string,

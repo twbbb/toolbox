@@ -16,6 +16,17 @@ import (
 	"git.woa.com/th-go/toolbox/util/osutil"
 )
 
+// InitTaskTickerEnv 初始定时任务，包含env
+func InitTaskTickerEnv(
+	runFunc func(ctx context.Context) error, taskName string, secondDuration int, baseLockKey string,
+	lock entity.DistributLock,
+) error {
+	if trpc.GlobalConfig() != nil && trpc.GlobalConfig().Global.EnvName != "" {
+		baseLockKey = baseLockKey + ":" + trpc.GlobalConfig().Global.EnvName
+	}
+	return InitTaskTicker(runFunc, taskName, secondDuration, baseLockKey, lock)
+}
+
 // InitTaskTicker 初始定时任务
 func InitTaskTicker(
 	runFunc func(ctx context.Context) error, taskName string, secondDuration int, baseLockKey string,
@@ -99,7 +110,7 @@ func runDistributProcess(
 	cornKey := taskFunc.BaseLockKey + taskFunc.TaskName + ":corn"
 	lockState := taskFunc.DistributLock.Lock(ctx, cornKey, time.Second*time.Duration(taskFunc.CornDuration))
 	if !lockState {
-		log.InfoContextf(ctx, "runDistributProcess corn fail:%s", cornKey)
+		log.DebugContextf(ctx, "runDistributProcess corn fail:%s", cornKey)
 		return nil
 	}
 
@@ -107,7 +118,7 @@ func runDistributProcess(
 	// 任务执行最大时间的锁
 	lock := taskFunc.DistributLock.Lock(ctx, maxTimeLockKey, time.Second*time.Duration(taskFunc.MaxRunTime))
 	if !lock {
-		log.InfoContextf(ctx, "runDistributProcess lock fail:%s", maxTimeLockKey)
+		log.DebugContextf(ctx, "runDistributProcess lock fail:%s", maxTimeLockKey)
 		return nil
 	}
 	// 重启时候，接收到 SIGTERM 信号时，关闭上下文信号，修改锁定时间为2分钟。

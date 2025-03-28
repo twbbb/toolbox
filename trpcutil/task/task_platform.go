@@ -40,6 +40,19 @@ func AddTask(taskNam string, taskFunc entity.PlatformTaskFunc) {
 	}
 }
 
+// AddTaskWithCallback 添加有回调函数的任务
+func AddTaskWithCallback(taskNam string, taskFunc entity.PlatformTaskFuncWithCallback, callback entity.PlatformTaskCallbackFunc) {
+	if taskFuncs[taskNam] != nil {
+		log.Errorf("DoPlatformTask|AddTask| 重复注册任务:%s", taskNam)
+		return
+	}
+	taskFuncs[taskNam] = &entity.PlatformTask{
+		TaskName:         taskNam,
+		FuncWithCallBack: taskFunc,
+		CallbackFunc:     callback,
+	}
+}
+
 // DoPlatformTask 处理平台下发的任务
 func DoPlatformTask(ctx context.Context, msg string) (err error) {
 	var taskDto entity.PlatformTaskDto
@@ -61,6 +74,7 @@ func DoPlatformTask(ctx context.Context, msg string) (err error) {
 // doTask 处理任务
 func doTask(ctx context.Context, taskDto entity.PlatformTaskDto) (err error) {
 	start := time.Now()
+	var callbackData interface{}
 	// 处理异常情况
 	defer func() {
 		if p := recover(); p != nil {
@@ -68,7 +82,12 @@ func doTask(ctx context.Context, taskDto entity.PlatformTaskDto) (err error) {
 			debug.PrintStack()
 			monitor.ReportPlatformTask(taskDto.TaskName, false, getUseTime(start), taskDto.Corn)
 		}
-
+		if m := taskFuncs[taskDto.TaskName]; m != nil && m.CallbackFunc != nil {
+			err = m.CallbackFunc(ctx, callbackData)
+			if err != nil {
+				log.ErrorContextf(ctx, "DoPlatformTask|DoTask|回调函数出现错误:%s|回调数据%s|err:%+v", taskDto.TaskName, jsonMarshal(callbackData), err)
+			}
+		}
 	}()
 
 	taskFunc := taskFuncs[taskDto.TaskName]
@@ -86,7 +105,17 @@ func doTask(ctx context.Context, taskDto entity.PlatformTaskDto) (err error) {
 		}
 		defer distributeLock.UnLock(ctx, taskDto.LockKey)
 	}
-	err = taskFunc.Func(ctx, taskDto.TransformMsg)
+	// 执行任务,优先执行callBackFunc
+	if taskFunc.FuncWithCallBack != nil {
+		callbackData, err = taskFunc.FuncWithCallBack(ctx, taskDto.TransformMsg)
+		if err != nil {
+			log.ErrorContextf(ctx, "DoPlatformTask|DoTask| 任务执行出现错误:%s|err:%+v", taskDto.TaskName, err)
+			monitor.ReportPlatformTask(taskDto.TaskName, false, getUseTime(start), taskDto.Corn)
+			return
+		}
+	} else {
+		err = taskFunc.Func(ctx, taskDto.TransformMsg)
+	}
 	if err != nil {
 		log.ErrorContextf(ctx, "DoPlatformTask|DoTask| 任务执行出现错误:%s|err:%+v", taskDto.TaskName, err)
 		monitor.ReportPlatformTask(taskDto.TaskName, false, getUseTime(start), taskDto.Corn)

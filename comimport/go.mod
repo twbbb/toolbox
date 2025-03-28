@@ -1,6 +1,8 @@
 module git.woa.com/th-go/toolbox/comimport
 
-go 1.20
+go 1.21
+
+toolchain go1.21.6
 
 require (
 	git.code.oa.com/trpc-go/trpc-config-tconf v0.1.10

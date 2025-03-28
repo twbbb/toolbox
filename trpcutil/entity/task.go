@@ -69,9 +69,16 @@ type PlatformTaskDto struct {
 
 // PlatformTaskFunc 定时任务平台消息传递消息处理函数类型
 type PlatformTaskFunc func(ctx context.Context, data string) error
+type PlatformTaskFuncWithCallback func(ctx context.Context, data string) (interface{}, error)
+type PlatformTaskCallbackFunc func(ctx context.Context, data interface{}) error
 
 // PlatformTask 定时任务平台消息传递消息处理结构体
 type PlatformTask struct {
 	TaskName string
-	Func     PlatformTaskFunc
+	// 无回调函数的方法
+	Func PlatformTaskFunc
+	// 有后续回掉函数的方法
+	FuncWithCallBack PlatformTaskFuncWithCallback
+	// 回调函数
+	CallbackFunc PlatformTaskCallbackFunc
 }

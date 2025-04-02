@@ -80,7 +80,7 @@ func doTask(ctx context.Context, taskDto entity.PlatformTaskDto) (err error) {
 		if p := recover(); p != nil {
 			log.ErrorContextf(ctx, "DoPlatformTask|DoTask:%s|panic:%v,%s", taskDto.TaskName, p, debug.Stack())
 			debug.PrintStack()
-			monitor.ReportPlatformTask(taskDto.TaskName, false, getUseTime(start), taskDto.Corn)
+			monitor.ReportPlatformTask(taskDto.TaskName, false, getUseTime(start), taskDto.Cron)
 		}
 		if m := taskFuncs[taskDto.TaskName]; m != nil && m.CallbackFunc != nil {
 			err = m.CallbackFunc(ctx, callbackData)
@@ -100,7 +100,7 @@ func doTask(ctx context.Context, taskDto entity.PlatformTaskDto) (err error) {
 		if !lock {
 			log.ErrorContextf(ctx, "DoPlatformTask|DoTask| 获取锁失败:%s", taskDto.LockKey)
 			robotAlarm(ctx, taskDto, fmt.Sprintf(",获取锁失败:%s", taskDto.LockKey))
-			monitor.ReportPlatformTask(taskDto.TaskName, false, getUseTime(start), taskDto.Corn)
+			monitor.ReportPlatformTask(taskDto.TaskName, false, getUseTime(start), taskDto.Cron)
 			return
 		}
 		defer distributeLock.UnLock(ctx, taskDto.LockKey)
@@ -110,7 +110,7 @@ func doTask(ctx context.Context, taskDto entity.PlatformTaskDto) (err error) {
 		callbackData, err = taskFunc.FuncWithCallBack(ctx, taskDto.TransformMsg)
 		if err != nil {
 			log.ErrorContextf(ctx, "DoPlatformTask|DoTask| 任务执行出现错误:%s|err:%+v", taskDto.TaskName, err)
-			monitor.ReportPlatformTask(taskDto.TaskName, false, getUseTime(start), taskDto.Corn)
+			monitor.ReportPlatformTask(taskDto.TaskName, false, getUseTime(start), taskDto.Cron)
 			return
 		}
 	} else {
@@ -118,10 +118,10 @@ func doTask(ctx context.Context, taskDto entity.PlatformTaskDto) (err error) {
 	}
 	if err != nil {
 		log.ErrorContextf(ctx, "DoPlatformTask|DoTask| 任务执行出现错误:%s|err:%+v", taskDto.TaskName, err)
-		monitor.ReportPlatformTask(taskDto.TaskName, false, getUseTime(start), taskDto.Corn)
+		monitor.ReportPlatformTask(taskDto.TaskName, false, getUseTime(start), taskDto.Cron)
 		return
 	}
-	monitor.ReportPlatformTask(taskDto.TaskName, true, getUseTime(start), taskDto.Corn)
+	monitor.ReportPlatformTask(taskDto.TaskName, true, getUseTime(start), taskDto.Cron)
 	log.InfoContextf(ctx, "DoPlatformTask|DoTask|taskName:%s|costTime:%s|info:%s", taskDto.TaskName, time.Since(start), taskDto.TransformMsg)
 	if taskDto.AlarmTimeSec > 0 && time.Since(start).Seconds() > float64(taskDto.AlarmTimeSec) {
 		log.ErrorContextf(ctx, "DoPlatformTask|DoTask|taskName:%s|cost:%v|info:%s|超时告警", taskDto.TaskName, time.Since(start), taskDto.TransformMsg)

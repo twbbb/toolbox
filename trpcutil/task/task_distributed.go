@@ -18,12 +18,25 @@ import (
 
 // InitTaskTickerEnv 初始定时任务，包含env
 func InitTaskTickerEnv(
-	runFunc func(ctx context.Context) error, taskName string, secondDuration int, baseLockKey string,
+	runFunc func(ctx context.Context) error, taskName string, secondDuration int,
 	lock entity.DistributLock,
 ) error {
-	if trpc.GlobalConfig() != nil && trpc.GlobalConfig().Global.EnvName != "" {
-		baseLockKey = baseLockKey + ":" + trpc.GlobalConfig().Global.EnvName
+	baseLockKey := ""
+	if trpc.GlobalConfig() != nil {
+		if trpc.GlobalConfig().Server.Server != "" {
+			baseLockKey = trpc.GlobalConfig().Server.Server + ":"
+		} else {
+			baseLockKey = "task:"
+		}
+		if trpc.GlobalConfig().Global.EnvName != "" {
+			baseLockKey = baseLockKey + trpc.GlobalConfig().Global.EnvName + ":"
+		}
 	}
+
+	if baseLockKey == "" {
+		baseLockKey = "task:"
+	}
+
 	return InitTaskTicker(runFunc, taskName, secondDuration, baseLockKey, lock)
 }
 

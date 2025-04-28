@@ -121,7 +121,11 @@ func runDistributProcess(
 
 	// 定时任务，防止重复执行，比如多台机器，3分钟只能执行一次
 	cornKey := taskFunc.BaseLockKey + taskFunc.TaskName + ":corn"
-	lockState := taskFunc.DistributLock.Lock(ctx, cornKey, time.Second*time.Duration(taskFunc.CornDuration))
+	lockTime := taskFunc.CornDuration
+	if lockTime > 3 {
+		lockTime = lockTime - 2
+	}
+	lockState := taskFunc.DistributLock.Lock(ctx, cornKey, time.Second*time.Duration(lockTime))
 	if !lockState {
 		log.DebugContextf(ctx, "runDistributProcess corn fail:%s", cornKey)
 		return nil

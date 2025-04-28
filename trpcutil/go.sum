@@ -2,8 +2,6 @@ git.code.oa.com/trpc-go/trpc-go v0.15.1 h1:FfGWibD7GkAWLXnR3s3QWRvGqxf6LvkaXE/0v
 git.code.oa.com/trpc-go/trpc-go v0.15.1/go.mod h1:BBHHXInPnR7mctf95jHKuQlfuUVHU2Yceca4LvrrDzI=
 git.woa.com/jce/jce v1.2.0 h1:o75OgZYPg2+AWtF3m7YkC6lISOKtMmuj3H2UzD6e8Rg=
 git.woa.com/jce/jce v1.2.0/go.mod h1:tDEP7kGD+54CmvikQ3n5CS3YYwzSkiqKgXdOhFKpvq0=
-git.woa.com/th-go/toolbox/util v0.1.4 h1:PpKY4UFvOqB5GGLYTfSKYgYVzWDozPWQyWWRUKEXRhE=
-git.woa.com/th-go/toolbox/util v0.1.4/go.mod h1:aGrDClOal5OxK2PWm4PFqPqKxruGjR+SzxP46nfD4qE=
 git.woa.com/th-go/toolbox/util v0.1.5 h1:O/jLm0znRbegxZ+NYvz5BmRvlyYqwRv4vl1pq+zgBiY=
 git.woa.com/th-go/toolbox/util v0.1.5/go.mod h1:oSLoOfIEUEEwDaj/P9VGKcdP+geVzGY8ZODHuehEI6E=
 git.woa.com/trpc-go/go_reuseport v1.7.0 h1:h9Z8/fFvOSk+ezrLRyJ8Ck4tka74ZRCxgKI+4zYlT44=

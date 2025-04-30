@@ -40,6 +40,19 @@ func AddTask(taskNam string, taskFunc entity.PlatformTaskFunc) {
 	}
 }
 
+// AddTaskWithCallback 添加有回调函数的任务
+func AddTaskWithCallback(taskNam string, taskFunc entity.PlatformTaskFuncWithCallback, callback entity.PlatformTaskCallbackFunc) {
+	if taskFuncs[taskNam] != nil {
+		log.Errorf("DoPlatformTask|AddTask| 重复注册任务:%s", taskNam)
+		return
+	}
+	taskFuncs[taskNam] = &entity.PlatformTask{
+		TaskName:         taskNam,
+		FuncWithCallBack: taskFunc,
+		CallbackFunc:     callback,
+	}
+}
+
 // DoPlatformTask 处理平台下发的任务
 func DoPlatformTask(ctx context.Context, msg string) (err error) {
 	var taskDto entity.PlatformTaskDto
@@ -61,14 +74,20 @@ func DoPlatformTask(ctx context.Context, msg string) (err error) {
 // doTask 处理任务
 func doTask(ctx context.Context, taskDto entity.PlatformTaskDto) (err error) {
 	start := time.Now()
+	var callbackData interface{}
 	// 处理异常情况
 	defer func() {
 		if p := recover(); p != nil {
 			log.ErrorContextf(ctx, "DoPlatformTask|DoTask:%s|panic:%v,%s", taskDto.TaskName, p, debug.Stack())
 			debug.PrintStack()
-			monitor.ReportPlatformTask(taskDto.TaskName, false, getUseTime(start), taskDto.Corn)
+			monitor.ReportPlatformTask(taskDto.TaskName, false, getUseTime(start), taskDto.Cron)
 		}
-
+		if m := taskFuncs[taskDto.TaskName]; m != nil && m.CallbackFunc != nil {
+			err = m.CallbackFunc(ctx, callbackData)
+			if err != nil {
+				log.ErrorContextf(ctx, "DoPlatformTask|DoTask|回调函数出现错误:%s|回调数据%s|err:%+v", taskDto.TaskName, jsonMarshal(callbackData), err)
+			}
+		}
 	}()
 
 	taskFunc := taskFuncs[taskDto.TaskName]
@@ -81,18 +100,28 @@ func doTask(ctx context.Context, taskDto entity.PlatformTaskDto) (err error) {
 		if !lock {
 			log.ErrorContextf(ctx, "DoPlatformTask|DoTask| 获取锁失败:%s", taskDto.LockKey)
 			robotAlarm(ctx, taskDto, fmt.Sprintf(",获取锁失败:%s", taskDto.LockKey))
-			monitor.ReportPlatformTask(taskDto.TaskName, false, getUseTime(start), taskDto.Corn)
+			monitor.ReportPlatformTask(taskDto.TaskName, false, getUseTime(start), taskDto.Cron)
 			return
 		}
 		defer distributeLock.UnLock(ctx, taskDto.LockKey)
 	}
-	err = taskFunc.Func(ctx, taskDto.TransformMsg)
+	// 执行任务,优先执行callBackFunc
+	if taskFunc.FuncWithCallBack != nil {
+		callbackData, err = taskFunc.FuncWithCallBack(ctx, taskDto.TransformMsg)
+		if err != nil {
+			log.ErrorContextf(ctx, "DoPlatformTask|DoTask| 任务执行出现错误:%s|err:%+v", taskDto.TaskName, err)
+			monitor.ReportPlatformTask(taskDto.TaskName, false, getUseTime(start), taskDto.Cron)
+			return
+		}
+	} else {
+		err = taskFunc.Func(ctx, taskDto.TransformMsg)
+	}
 	if err != nil {
 		log.ErrorContextf(ctx, "DoPlatformTask|DoTask| 任务执行出现错误:%s|err:%+v", taskDto.TaskName, err)
-		monitor.ReportPlatformTask(taskDto.TaskName, false, getUseTime(start), taskDto.Corn)
+		monitor.ReportPlatformTask(taskDto.TaskName, false, getUseTime(start), taskDto.Cron)
 		return
 	}
-	monitor.ReportPlatformTask(taskDto.TaskName, true, getUseTime(start), taskDto.Corn)
+	monitor.ReportPlatformTask(taskDto.TaskName, true, getUseTime(start), taskDto.Cron)
 	log.InfoContextf(ctx, "DoPlatformTask|DoTask|taskName:%s|costTime:%s|info:%s", taskDto.TaskName, time.Since(start), taskDto.TransformMsg)
 	if taskDto.AlarmTimeSec > 0 && time.Since(start).Seconds() > float64(taskDto.AlarmTimeSec) {
 		log.ErrorContextf(ctx, "DoPlatformTask|DoTask|taskName:%s|cost:%v|info:%s|超时告警", taskDto.TaskName, time.Since(start), taskDto.TransformMsg)

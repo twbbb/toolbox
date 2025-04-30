@@ -15,6 +15,9 @@ import (
 
 // AesEncryptStr aes加密
 func AesEncryptStr(orig string, aesKey string) (string, error) {
+	if orig == "" {
+		return "", nil
+	}
 	iv, err := GetIv()
 	if err != nil {
 		return "", err
@@ -38,6 +41,9 @@ func AesEncryptStr(orig string, aesKey string) (string, error) {
 
 // AesDecryptStr aes解密
 func AesDecryptStr(ucode string, aesKey string) (string, error) {
+	if ucode == "" {
+		return "", nil
+	}
 	UcodeByte, err := base64.StdEncoding.DecodeString(ucode)
 	if err != nil {
 		return "", err

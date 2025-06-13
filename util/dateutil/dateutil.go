@@ -91,3 +91,16 @@ func BeijingDefaultParse(t string) (time.Time, error) {
 func BeijingParseByFormat(format string, t string) (time.Time, error) {
 	return time.ParseInLocation(format, t, beijingLocation)
 }
+
+// GetDayAddDay 获取下一天
+func GetDayAddDay(lastJqEndDay string, dayNum int) (
+	string, error,
+) {
+	// 将结束日期加一天
+	endDay, err := BeijingParseYMD(lastJqEndDay)
+	if err != nil {
+		return "", err
+	}
+	lastJqEndNextDay := BeijingFormatYMD(endDay.AddDate(0, 0, dayNum))
+	return lastJqEndNextDay, nil
+}

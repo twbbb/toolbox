@@ -61,6 +61,23 @@ func GetChannel(ctx context.Context) string {
 func SetSthid(ctx context.Context, sthid string) {
 	trpc.SetMetaData(ctx, "sthid", []byte(sthid))
 }
+
+// GetCityCode context 中获取 citycode
+func GetCityCode(ctx context.Context) string {
+	return CommonGet(ctx, []string{"cityCode", "CityCode", "citycode", "Citycode"})
+}
+
+// CommonGet 通用获取某个 key 的值
+func CommonGet(ctx context.Context, keys []string) string {
+	for _, key := range keys {
+		v := getStrFromCtx(ctx, key)
+		if v != "" {
+			return v
+		}
+	}
+	return ""
+}
+
 func getStrFromCtx(ctx context.Context, label string) string {
 	if value := trpc.GetMetaData(ctx, label); value != nil {
 		return string(value)

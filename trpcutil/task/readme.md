@@ -29,8 +29,9 @@ func InitCache() error {
 > 对接定时任务平台的pb协议。只需在pb中定义一个与定时平台协议一致的协议。
 > 该接口的实现由task.DoPlatformTask(ctx, req.Msg) 进行分发。
 > 对于注册的方法，会自动上报智妍自定义监控。支持超时企业微信告警，加锁防止重复执行。
-使用案例
+![img.png](http://legostatic-76008.gzc.vod.tencent-cloud.com/Clipboard_Screenshot_1750041814-e202ddbbb6a5244f711c42deed1203cd.png)
 
+使用案例
 1. 初始化定时任务
 ```go
 // Init 

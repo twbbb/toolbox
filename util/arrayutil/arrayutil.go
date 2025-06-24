@@ -7,6 +7,16 @@ import (
 	"strings"
 )
 
+// ReverseSlice 反转数组
+func ReverseSlice[T any](s []T) {
+	if len(s) == 0 {
+		return
+	}
+	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
+		s[i], s[j] = s[j], s[i]
+	}
+}
+
 // FilterEmptyStrings 过滤掉数组中空字符串
 func FilterEmptyStrings(arr []string) []string {
 	var result = []string{}

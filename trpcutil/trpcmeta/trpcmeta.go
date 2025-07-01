@@ -62,6 +62,11 @@ func SetSthid(ctx context.Context, sthid string) {
 	trpc.SetMetaData(ctx, "sthid", []byte(sthid))
 }
 
+// SetRequestId context中设置requestId
+func SetRequestId(ctx context.Context, sthid string) {
+	trpc.SetMetaData(ctx, "requestId", []byte(sthid))
+}
+
 // GetCityCode context 中获取 citycode
 func GetCityCode(ctx context.Context) string {
 	return CommonGet(ctx, []string{"cityCode", "CityCode", "citycode", "Citycode"})

@@ -77,7 +77,7 @@ func runProcess(
 
 	begin := time.Now()
 	loggerInfo := taskFunc.Logger
-	ctx, msg := codec.EnsureMessage(context.Background())
+	ctx, msg := codec.EnsureMessage(trpc.BackgroundContext())
 	trpc.SetMetaData(ctx, "requestId", []byte(requestId))
 	loggerInfo = loggerInfo.With(log.Field{Key: "requestId", Value: requestId})
 	msg.WithLogger(loggerInfo)

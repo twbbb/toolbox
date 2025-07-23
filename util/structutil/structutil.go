@@ -4,6 +4,9 @@ package structutil
 import (
 	"reflect"
 	"strings"
+
+	"git.code.oa.com/trpc-go/trpc-go/log"
+	"github.com/jinzhu/copier"
 )
 
 // GetStructArrName 提取类数组名称
@@ -104,4 +107,12 @@ func CopyFieldsByParamKey(src interface{}, dst interface{}, reqParamKey []string
 		}
 	}
 	return errKey
+}
+
+// Copy ...
+func Copy(from interface{}, to interface{}) {
+	err := copier.CopyWithOption(to, from, copier.Option{IgnoreEmpty: true, DeepCopy: true})
+	if err != nil {
+		log.Errorf("conv failed, err=%+v", err)
+	}
 }

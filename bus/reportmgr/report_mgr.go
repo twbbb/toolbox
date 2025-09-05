@@ -156,3 +156,38 @@ func BuildHealthManagerURL(
 
 	return fullURL, nil
 }
+
+// BuildHealthManagerURLForOcrCenter 构建完整的健康管理URL, fileType对应OcrCenter里面的
+func BuildHealthManagerURLForOcrCenter(
+	ctx context.Context,
+	isBizReport string,
+	bizId string,
+	rid string,
+	sthid string,
+	fileName string,
+	fileType int32,
+	fileUrl string,
+	orgName string,
+	reportType int32, aeskey string) (string, error) {
+
+	// 从ocrcenter过来的 0是图片，1是pdf
+	switch reportType {
+	case 0:
+		reportType = 1
+	case 1:
+		reportType = 2
+
+	}
+	otherBizReportInfo, err := EncReportInfo(ctx, aeskey, rid, reportType, sthid, bizId)
+	fullURL, err := BuildHealthManagerURL(
+		isBizReport,
+		bizId,
+		otherBizReportInfo,
+		fileName,
+		fileType,
+		fileUrl,
+		orgName,
+		reportType,
+	)
+	return fullURL, err
+}

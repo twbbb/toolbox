@@ -1,4 +1,4 @@
-module ocr
+module git.woa.com/th-go/toolbox/bus/ocr
 
 go 1.23.4
 

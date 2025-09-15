@@ -31,7 +31,7 @@ type HealthManagerParams struct {
 
 // ReportTypeToChineseName 报告类型到中文名称的映射
 var ReportTypeToChineseName = map[int32]string{
-	REPORT_TYPE_UNSPECIFIED: "未指定",
+	REPORT_TYPE_UNSPECIFIED: "",
 	REPORT_TYPE_EXAM:        "检查报告",
 	REPORT_TYPE_LAB:         "检验报告",
 	REPORT_TYPE_RECORD:      "病例文书报告",

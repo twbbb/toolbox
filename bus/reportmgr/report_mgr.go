@@ -14,7 +14,7 @@ import (
 // ReportInfo 报告信息结构体
 type ReportInfo struct {
 	Rid        string `json:"rid"`         // 报告ID  根据rid可以从cos拿到报告原文
-	ReportType int32  `json:"report_type"` // 报告类型  1-pdf,2-图片
+	ReportType int32  `json:"report_type"` // 报告类型  1-pdf,2-图片，3-文本
 	Sthid      string `json:"sthid"`       // 用户sthid
 	Biz        string `json:"biz"`         // 业务ID 健康管理侧分配
 }
@@ -42,6 +42,13 @@ const (
 	REPORT_TYPE_EXAM        = 1 // 检查报告
 	REPORT_TYPE_LAB         = 2 // 检验报告
 	REPORT_TYPE_RECORD      = 3 // 病例文书报告
+)
+
+// 对应健康管理的文件映射
+const (
+	FILE_TYPE_PDF   = 1
+	FILE_TYPE_IMAGE = 2
+	FILE_TYPE_TEXT  = 3
 )
 
 // EncReportInfo 加密报告信息
@@ -174,13 +181,13 @@ func BuildHealthManagerURLForOcrCenter(
 	// 从ocrcenter过来的 0是图片，1是pdf, 2是文本
 	switch fileType {
 	case 0:
-		fileType = 1
+		fileType = FILE_TYPE_IMAGE
 	case 1:
-		fileType = 2
+		fileType = FILE_TYPE_PDF
 	case 2:
-		fileType = 3
+		fileType = FILE_TYPE_TEXT
 	}
-	otherBizReportInfo, err := EncReportInfo(ctx, aeskey, rid, reportType, sthid, bizId)
+	otherBizReportInfo, err := EncReportInfo(ctx, aeskey, rid, fileType, sthid, bizId)
 	fullURL, err := BuildHealthManagerURL(
 		isBizReport,
 		bizId,

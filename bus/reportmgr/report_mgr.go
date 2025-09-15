@@ -172,13 +172,13 @@ func BuildHealthManagerURLForOcrCenter(
 	reportType int32, aeskey string) (string, error) {
 
 	// 从ocrcenter过来的 0是图片，1是pdf, 2是文本
-	switch reportType {
+	switch fileType {
 	case 0:
-		reportType = 1
+		fileType = 1
 	case 1:
-		reportType = 2
+		fileType = 2
 	case 2:
-		reportType = 3
+		fileType = 3
 	}
 	otherBizReportInfo, err := EncReportInfo(ctx, aeskey, rid, reportType, sthid, bizId)
 	fullURL, err := BuildHealthManagerURL(

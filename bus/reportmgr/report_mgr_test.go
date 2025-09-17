@@ -55,3 +55,11 @@ func TestReportMgr2(t *testing.T) {
 	}
 	fmt.Printf("Generated URL: %s\n", fullURL)
 }
+
+func TestReportMgr3(t *testing.T) {
+	ctx := context.Background()
+	url, _ := BuildHealthManagerURLForOcrCenter(ctx, "1", "diagnosis",
+		"14ARD080f_eOVH8ioynW4gvfy_WnxP0J7elMUqHXGrE_ZVrBKsTMs9srXVpTSGw8rlmiNGV",
+		"@athooJQLI1ozwL3eroVjJUoef6w7IqzMm8", "", 2, "", "豪贵测试医院", 0, "tZa8k5X7HO5vT9Iw")
+	fmt.Println(url)
+}

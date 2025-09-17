@@ -9,7 +9,7 @@ import (
 func TestReportMgr(t *testing.T) {
 	ctx := context.Background()
 	aeskey := "vDxVjrAowp5GcvXs"
-	info, err := EncReportInfo(ctx, aeskey, "123", 1, "123", "123")
+	info, err := EncReportInfo(ctx, aeskey, "123", REPORT_TYPE_EXAM, "123", "123")
 	if err != nil {
 		t.Fail()
 		return
@@ -23,9 +23,43 @@ func TestReportMgr(t *testing.T) {
 		return
 	}
 	fmt.Println(decInfo)
-	if decInfo.Rid != "123" || decInfo.ReportType != 1 || decInfo.Sthid != "123" || decInfo.Biz != "123" {
+	if decInfo.Rid != "123" || decInfo.ReportType != REPORT_TYPE_EXAM || decInfo.Sthid != "123" || decInfo.Biz != "123" {
 		t.Fail()
 		return
 	}
 
+}
+
+func TestReportMgr2(t *testing.T) {
+	// 测试数据
+	otherBizReportInfo := "sf7+gVLOjt1DgqOh9bauEEPh+CAbrw6iHW+8NjD0dYbYWjxYNPMlEoYjsKcJWLiBtPmI+/+myweG4BahspqQQMy1WCYDlcniyKKwAVqeMpx9/EJvoVeibIpXy3P/ZW1wnM2Ih2osvlp/9OauM+1TyvHaH590MQdzk9jChs+PYNjP3ftyw2cCprpUvG80uIlhKPzN6zX3zeiuEMZG+ze3L0Bs9x7VKenk6WTeFXLL9lS25DwP6v0prd+hpxMuY2MlkcUMxXlNptU6JGviEaFAlQ=="
+	fileName := "邓炜豪的体检报告"
+	orgName := "香港大学深圳医院"
+	fileType := int32(0)
+	fileUrl := ""
+
+	// 测试构建完整URL
+	fullURL, err := BuildHealthManagerURL(
+		"1",
+		"jiankangwenwen",
+		otherBizReportInfo,
+		fileName,
+		fileType,
+		fileUrl,
+		orgName,
+		10,
+	)
+	if err != nil {
+		t.Errorf("BuildHealthManagerURL failed: %v", err)
+		return
+	}
+	fmt.Printf("Generated URL: %s\n", fullURL)
+}
+
+func TestReportMgr3(t *testing.T) {
+	ctx := context.Background()
+	url, _ := BuildHealthManagerURLForOcrCenter(ctx, "1", "diagnosis",
+		"14ARD080f_eOVH8ioynW4gvfy_WnxP0J7elMUqHXGrE_ZVrBKsTMs9srXVpTSGw8rlmiNGV",
+		"@athooJQLI1ozwL3eroVjJUoef6w7IqzMm8", "", 2, "", "豪贵测试医院", 0, "tZa8k5X7HO5vT9Iw")
+	fmt.Println(url)
 }

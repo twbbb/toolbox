@@ -2,6 +2,7 @@ package bloom
 
 import (
 	"context"
+	"errors"
 
 	"git.woa.com/th-go/toolbox/component/bloom/bitset"
 	"github.com/redis/go-redis/v9"
@@ -12,6 +13,9 @@ import (
 func GetBloom(redisClientCli *redis.Client, bloomKey string, dataSize uint, float float64) (
 	*BloomFilter, error,
 ) {
+	if bloomKey == "" {
+		return nil, errors.New("bloomKey is empty")
+	}
 	m, k := EstimateParameters(dataSize, float)
 	bitSet := bitset.NewRedisBitSet(bloomKey, redisClientCli)
 	b := New(m, k, bitSet)

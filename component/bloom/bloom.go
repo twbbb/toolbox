@@ -24,23 +24,21 @@ type BloomFilter struct {
 }
 
 // GetBloom 获取并初始化bloom过滤器，如果不存在则创建.dataSize 数据大小，float 误差率
-func GetBloom(redisClientCli *redis.Client, bloomKey string, isInit bool, dataSize uint, float float64) (
+func GetBloom(redisClientCli *redis.Client, bloomKey string, dataSize uint, float float64) (
 	*BloomFilter, error,
 ) {
 	m, k := EstimateParameters(dataSize, float)
 	bitSet := NewRedisBitSet(bloomKey, redisClientCli)
 	b := New(m, k, bitSet)
-	// 如果要初始化
-	if isInit {
-		// 检查是否已经存在了
-		flag, err := redisClientCli.Exists(context.Background(), bloomKey).Result()
-		if err != nil {
-			return nil, err
-		}
-		// 不存在则初始化
-		if flag == 0 && err == nil {
-			redisClientCli.SetBit(context.Background(), bloomKey, int64(m), 0)
-		}
+
+	// 检查是否已经存在了
+	flag, err := redisClientCli.Exists(context.Background(), bloomKey).Result()
+	if err != nil {
+		return nil, err
+	}
+	// 不存在则初始化
+	if flag == 0 {
+		redisClientCli.SetBit(context.Background(), bloomKey, int64(m), 0)
 	}
 
 	return b, nil

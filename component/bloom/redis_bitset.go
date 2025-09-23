@@ -20,9 +20,24 @@ func NewRedisBitSet(keyPrefix string, client *redis.Client) *RedisBitSet {
 
 // Set 设置
 func (r *RedisBitSet) Set(ctx context.Context, offsets []uint) error {
+	if len(offsets) == 0 {
+		return nil
+	}
+
+	// 按key分组offsets
+	keyOffsets := make(map[string][]uint)
 	for _, offset := range offsets {
 		key, thisOffset := r.getKeyOffset(offset)
-		_, err := r.client.SetBit(ctx, key, int64(thisOffset), 1).Result()
+		keyOffsets[key] = append(keyOffsets[key], thisOffset)
+	}
+
+	// 对每个key执行批量BITFIELD操作
+	for key, offsetList := range keyOffsets {
+		args := []interface{}{}
+		for _, offset := range offsetList {
+			args = append(args, "SET", "u1", int64(offset), 1)
+		}
+		_, err := r.client.BitField(ctx, key, args...).Result()
 		if err != nil {
 			return err
 		}
@@ -33,14 +48,32 @@ func (r *RedisBitSet) Set(ctx context.Context, offsets []uint) error {
 
 // Test 测试是否存在
 func (r *RedisBitSet) Test(ctx context.Context, offsets []uint) (bool, error) {
+	if len(offsets) == 0 {
+		return true, nil
+	}
+
+	// 按key分组offsets
+	keyOffsets := make(map[string][]uint)
 	for _, offset := range offsets {
 		key, thisOffset := r.getKeyOffset(offset)
-		bitValue, err := r.client.GetBit(ctx, key, int64(thisOffset)).Result()
+		keyOffsets[key] = append(keyOffsets[key], thisOffset)
+	}
+
+	// 对每个key执行批量BITFIELD操作
+	for key, offsetList := range keyOffsets {
+		args := []interface{}{}
+		for _, offset := range offsetList {
+			args = append(args, "GET", "u1", int64(offset))
+		}
+		results, err := r.client.BitField(ctx, key, args...).Result()
 		if err != nil {
 			return false, err
 		}
-		if bitValue == 0 {
-			return false, nil
+		// 检查所有位是否都为1
+		for _, result := range results {
+			if result == 0 {
+				return false, nil
+			}
 		}
 	}
 

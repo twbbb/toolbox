@@ -8,6 +8,7 @@ import (
 )
 
 // GetBloom 获取并初始化bloom过滤器，如果不存在则创建.dataSize 数据大小，float 误差率
+// 注意：v0.1.0和v0.0.5的hash方法不兼容
 func GetBloom(redisClientCli *redis.Client, bloomKey string, dataSize uint, float float64) (
 	*BloomFilter, error,
 ) {

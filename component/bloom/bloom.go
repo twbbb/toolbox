@@ -7,45 +7,18 @@ import (
 	"hash/fnv"
 	"math"
 
-	"github.com/redis/go-redis/v9"
+	"git.woa.com/th-go/toolbox/component/bloom/bitset"
 )
-
-// BitSetProvider bit存储提供者
-type BitSetProvider interface {
-	Set(ctx context.Context, location []uint) error
-	Test(ctx context.Context, location []uint) (bool, error)
-}
 
 // BloomFilter 布隆过滤
 type BloomFilter struct {
 	m      uint
 	k      uint
-	bitSet BitSetProvider
-}
-
-// GetBloom 获取并初始化bloom过滤器，如果不存在则创建.dataSize 数据大小，float 误差率
-func GetBloom(redisClientCli *redis.Client, bloomKey string, dataSize uint, float float64) (
-	*BloomFilter, error,
-) {
-	m, k := EstimateParameters(dataSize, float)
-	bitSet := NewRedisBitSet(bloomKey, redisClientCli)
-	b := New(m, k, bitSet)
-
-	// 检查是否已经存在了
-	flag, err := redisClientCli.Exists(context.Background(), bloomKey).Result()
-	if err != nil {
-		return nil, err
-	}
-	// 不存在则初始化
-	if flag == 0 {
-		redisClientCli.SetBit(context.Background(), bloomKey, int64(m), 0)
-	}
-
-	return b, nil
+	bitSet bitset.BitSetApi
 }
 
 // New 新增过滤器
-func New(m uint, k uint, bitSet BitSetProvider) *BloomFilter {
+func New(m uint, k uint, bitSet bitset.BitSetApi) *BloomFilter {
 	return &BloomFilter{m: m, k: k, bitSet: bitSet}
 }
 
@@ -59,7 +32,7 @@ func EstimateParameters(n uint, p float64) (uint, uint) {
 // Add 添加
 func (f *BloomFilter) Add(ctx context.Context, data []byte) error {
 	locations := f.getLocations(data)
-	err := f.bitSet.Set(ctx, locations)
+	err := f.bitSet.SetBit(ctx, locations)
 	if err != nil {
 		return err
 	}
@@ -69,7 +42,7 @@ func (f *BloomFilter) Add(ctx context.Context, data []byte) error {
 // Exists 是否存在
 func (f *BloomFilter) Exists(ctx context.Context, data []byte) (bool, error) {
 	locations := f.getLocations(data)
-	isSet, err := f.bitSet.Test(ctx, locations)
+	isSet, err := f.bitSet.Exists(ctx, locations)
 	if err != nil {
 		return false, err
 	}
@@ -80,17 +53,40 @@ func (f *BloomFilter) Exists(ctx context.Context, data []byte) (bool, error) {
 	return true, nil
 }
 
-// getLocations 获取位置
+// getLocations 获取位置 - 使用双hash方法
 func (f *BloomFilter) getLocations(data []byte) []uint {
 	locations := make([]uint, f.k)
-	hasher := fnv.New64()
-	hasher.Write(data)
-	a := make([]byte, 1)
+
+	// 使用两个独立的hash函数
+	hasher1 := fnv.New64()
+	hasher1.Write(data)
+	hash1 := hasher1.Sum64()
+
+	hasher2 := fnv.New64a()
+	hasher2.Write(data)
+	hash2 := hasher2.Sum64()
+
+	// 使用双hash公式: h1(x) + i * h2(x)
 	for i := uint(0); i < f.k; i++ {
-		a[0] = byte(i)
-		hasher.Write(a)
-		hashValue := hasher.Sum64()
-		locations[i] = uint(hashValue % uint64(f.m))
+		combinedHash := hash1 + uint64(i)*hash2
+		locations[i] = uint(combinedHash % uint64(f.m))
 	}
+
 	return locations
 }
+
+//
+// // getLocations 获取位置
+// func (f *BloomFilter) getLocations(data []byte) []uint {
+// 	locations := make([]uint, f.k)
+// 	hasher := fnv.New64()
+// 	hasher.Write(data)
+// 	a := make([]byte, 1)
+// 	for i := uint(0); i < f.k; i++ {
+// 		a[0] = byte(i)
+// 		hasher.Write(a)
+// 		hashValue := hasher.Sum64()
+// 		locations[i] = uint(hashValue % uint64(f.m))
+// 	}
+// 	return locations
+// }

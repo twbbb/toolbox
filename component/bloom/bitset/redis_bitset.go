@@ -1,5 +1,5 @@
-// Package bloom bloom
-package bloom
+// Package bitset bitset
+package bitset
 
 import (
 	"context"
@@ -18,8 +18,8 @@ func NewRedisBitSet(keyPrefix string, client *redis.Client) *RedisBitSet {
 	return &RedisBitSet{keyPrefix, client}
 }
 
-// Set 设置
-func (r *RedisBitSet) Set(ctx context.Context, offsets []uint) error {
+// SetBit 设置
+func (r *RedisBitSet) SetBit(ctx context.Context, offsets []uint) error {
 	if len(offsets) == 0 {
 		return nil
 	}
@@ -46,8 +46,8 @@ func (r *RedisBitSet) Set(ctx context.Context, offsets []uint) error {
 	return nil
 }
 
-// Test 测试是否存在
-func (r *RedisBitSet) Test(ctx context.Context, offsets []uint) (bool, error) {
+// Exists 测试是否存在
+func (r *RedisBitSet) Exists(ctx context.Context, offsets []uint) (bool, error) {
 	if len(offsets) == 0 {
 		return true, nil
 	}

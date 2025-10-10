@@ -170,7 +170,10 @@ func runDistributProcess(
 			}
 			monitor.ReportCache(requestId, taskFunc.ReportName, taskFunc.TaskName, false, getUseTime(begin))
 
-			log.ErrorContextf(ctx, "runProcess panic %+v", r)
+			log.ErrorContextf(
+				ctx, "%s,%s,%s,%v,runProcess panic %+v", requestId, taskFunc.ReportName, taskFunc.TaskName,
+				getUseTime(begin), r,
+			)
 		}
 
 	}()

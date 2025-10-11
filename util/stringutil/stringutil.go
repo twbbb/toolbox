@@ -175,6 +175,17 @@ func GetJsonStr(obj interface{}) string {
 	return string(c)
 }
 
+// GetJsonStrNoEscape 获取不转义的json字符串
+func GetJsonStrNoEscape(obj interface{}) string {
+	buffer := &strings.Builder{}
+	encoder := json.NewEncoder(buffer)
+	encoder.SetEscapeHTML(false)
+	encoder.Encode(obj)
+	result := buffer.String()
+	// 去掉末尾的换行符
+	return result
+}
+
 // GetMaskStr 获取脱敏数据
 func GetMaskStr(str string, plainType int) string {
 

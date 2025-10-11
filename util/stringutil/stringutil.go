@@ -183,7 +183,7 @@ func GetJsonStrNoEscape(obj interface{}) string {
 	encoder.Encode(obj)
 	result := buffer.String()
 	// 去掉末尾的换行符
-	return result
+	return strings.TrimSuffix(result, "\n")
 }
 
 // GetMaskStr 获取脱敏数据

@@ -136,9 +136,9 @@ func (impl *CountInsertDb) updateInTx(
 			result = tx.Exec(impl.sql, count, currentTime, fid)
 		} else if impl.table != "" {
 			// 使用表名动态构建 SQL（注意：表名不能用占位符，需要拼接）
-			sql := "UPDATE " + impl.table + " SET f_usage_count = f_usage_count + ?, f_usage_time = ?, " +
+			sql := "UPDATE ? SET f_usage_count = f_usage_count + ?, f_usage_time = ?, " +
 				"f_update_time = ? WHERE f_id = ?"
-			result = tx.Exec(sql, count, currentTime, currentTime, fid)
+			result = tx.Exec(sql, impl.table, count, currentTime, currentTime, fid)
 		} else {
 			// 如果既没有 sql 也没有 table，回滚事务并返回错误
 			tx.Rollback()

@@ -2,6 +2,7 @@ package cachecount
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"git.code.oa.com/trpc-go/trpc-go/log"
@@ -34,6 +35,9 @@ func New(redisKeyPrefix string, redisClient *redis.Client) (*CacheCount, error) 
 
 	log.Infof("[CacheCount.New] success, prefix=%s", redisKeyPrefix)
 	return cc, nil
+}
+func (cc *CacheCount) IncrId(key int) {
+	cc.Incr(fmt.Sprintf("%d", key))
 }
 
 // Incr 增加指定key的计数

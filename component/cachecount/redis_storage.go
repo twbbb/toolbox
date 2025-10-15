@@ -73,36 +73,60 @@ func (rs *RedisStorage) GetCountsByDay(ctx context.Context, days int) (map[strin
 	return rs.GetCountsByDate(ctx, targetDate)
 }
 
-// GetCountsByDate 获取指定日期的所有计数数据
+// GetCountsByDate 获取指定日期的所有计数数据（使用HScan分批获取，避免阻塞Redis）
 // date: 日期时间，如果为零值则使用当前时间
 func (rs *RedisStorage) GetCountsByDate(ctx context.Context, date time.Time) (map[string]int64, error) {
 	redisKey := rs.getRedisKey(date)
 	dateStr := date.Format("20060102")
 
-	result, err := rs.redisClient.HGetAll(ctx, redisKey).Result()
-	if err != nil {
-		log.ErrorContextf(
-			ctx, "[RedisStorage.GetCountsByDate] HGetAll failed, key=%s, dateStr=%s, err=%v", redisKey, dateStr, err,
-		)
-		return nil, err
-	}
-	log.InfoContextf(
-		ctx, "[RedisStorage.GetCountsByDate] HGetAll success, key=%s, dateStr=%s, resultSize=%d", redisKey, dateStr,
-		len(result),
-	)
+	counts := make(map[string]int64)
+	var cursor uint64
+	var scanCount int
 
-	counts := make(map[string]int64, len(result))
-	for key, value := range result {
-		var count int64
-		_, err := fmt.Sscanf(value, "%d", &count)
+	// 使用HScan分批获取，每次获取1000条，避免阻塞Redis
+	for {
+		var keys []string
+		var err error
+		keys, cursor, err = rs.redisClient.HScan(ctx, redisKey, cursor, "*", 2000).Result()
 		if err != nil {
-			log.WarnContextf(
-				ctx, "[RedisStorage.GetCountsByDate] parse count failed, key=%s, value=%s, err=%v", key, value, err,
+			log.ErrorContextf(
+				ctx, "[RedisStorage.GetCountsByDate] HScan failed, key=%s, dateStr=%s, cursor=%d, scanCount=%d, err=%v",
+				redisKey, dateStr, cursor, scanCount, err,
 			)
-			continue
+			return nil, err
 		}
-		counts[key] = count
+
+		// HScan返回的是 [field1, value1, field2, value2, ...] 格式
+		for i := 0; i < len(keys); i += 2 {
+			if i+1 < len(keys) {
+				field := keys[i]
+				value := keys[i+1]
+
+				var count int64
+				_, err := fmt.Sscanf(value, "%d", &count)
+				if err != nil {
+					log.WarnContextf(
+						ctx, "[RedisStorage.GetCountsByDate] parse count failed, field=%s, value=%s, err=%v",
+						field, value, err,
+					)
+					continue
+				}
+				counts[field] = count
+			}
+		}
+
+		scanCount++
+
+		// cursor为0表示遍历完成
+		if cursor == 0 {
+			break
+		}
 	}
+
+	log.InfoContextf(
+		ctx, "[RedisStorage.GetCountsByDate] HScan success, key=%s, dateStr=%s, resultSize=%d, scanCount=%d",
+		redisKey, dateStr, len(counts), scanCount,
+	)
 
 	return counts, nil
 }
@@ -122,7 +146,9 @@ func (rs *RedisStorage) DeleteByDate(ctx context.Context, date time.Time) error 
 
 	err := rs.redisClient.Del(ctx, redisKey).Err()
 	if err != nil {
-		log.ErrorContextf(ctx, "[RedisStorage.DeleteByDate] delete failed, key=%s, dateStr=%s, err=%v", redisKey, dateStr, err)
+		log.ErrorContextf(
+			ctx, "[RedisStorage.DeleteByDate] delete failed, key=%s, dateStr=%s, err=%v", redisKey, dateStr, err,
+		)
 		return err
 	}
 	log.InfoContextf(ctx, "[RedisStorage.DeleteByDate] success, key=%s, dateStr=%s", redisKey, dateStr)

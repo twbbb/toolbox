@@ -74,7 +74,7 @@ func (cc *CacheCount) flush(ctx context.Context) error {
 	cc.countMap = make(map[string]int64)
 	cc.mu.Unlock()
 
-	log.InfoContextf(ctx, "[CacheCount.flush] start flush, dataSize=%d", dataSize)
+	// log.InfoContextf(ctx, "[CacheCount.flush] start flush, dataSize=%d", dataSize)
 	err := cc.storage.BatchIncrBy(ctx, localData)
 	if err != nil {
 		log.ErrorContextf(ctx, "[CacheCount.flush] flush to redis failed, dataSize=%d, err=%v", dataSize, err)

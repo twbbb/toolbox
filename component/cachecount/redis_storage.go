@@ -11,12 +11,12 @@ import (
 
 // RedisStorage Redis存储操作结构体
 type RedisStorage struct {
-	keyPrefix   string        // Redis key前缀，实际key格式为: prefix:YYYYMMDD
-	redisClient *redis.Client // Redis客户端实例
+	keyPrefix   string                // Redis key前缀，实际key格式为: prefix:YYYYMMDD
+	redisClient redis.UniversalClient // Redis客户端实例
 }
 
 // NewRedisStorage 创建Redis存储实例
-func NewRedisStorage(keyPrefix string, redisClient *redis.Client) *RedisStorage {
+func NewRedisStorage(keyPrefix string, redisClient redis.UniversalClient) *RedisStorage {
 	return &RedisStorage{
 		keyPrefix:   keyPrefix,
 		redisClient: redisClient,

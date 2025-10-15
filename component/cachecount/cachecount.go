@@ -24,8 +24,9 @@ func New(redisKeyPrefix string, redisClient *redis.Client) (*CacheCount, error) 
 		storage:  NewRedisStorage(redisKeyPrefix, redisClient),
 		countMap: make(map[string]int64),
 	}
-
-	err := task.InitCacheTicker(cc.flush, "flushLoop"+redisKeyPrefix, 60*2)
+	taskFunc := task.GetDefaultTaskFunc(cc.flush, "flushLoop"+redisKeyPrefix, 60*2)
+	taskFunc.InitStart = false
+	err := task.DoTask(taskFunc)
 	if err != nil {
 		log.Errorf("[CacheCount.New] init cache ticker failed, prefix=%s, err=%v", redisKeyPrefix, err)
 		return nil, err

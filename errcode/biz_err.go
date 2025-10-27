@@ -46,12 +46,12 @@ func (be *BizErr) AddBizErrServer(code int, msg string) error {
 	return be.addBizErr(5, code, msg)
 }
 
-// GetBizErrClient 获取客户端错误
+// GetBizErrClient 获取客户端(前端)错误
 func (be *BizErr) GetBizErrClient(code int, msg ...string) error {
 	return be.getBizErr(4, code, msg...)
 }
 
-// GetBizErrServer 获取服务端错误
+// GetBizErrServer 获取服务端(后端)错误
 func (be *BizErr) GetBizErrServer(code int, msg ...string) error {
 	return be.getBizErr(5, code, msg...)
 }

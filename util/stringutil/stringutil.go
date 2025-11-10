@@ -222,3 +222,13 @@ func Substr2(str string, start int, end int) string {
 	rs := []rune(str)
 	return string(rs[start:end])
 }
+
+var errorReplacer = strings.NewReplacer("\n", " ", "\r", " ")
+
+// GetErrorStr 获取错误字符串
+func GetErrorStr(err error) string {
+	if err == nil {
+		return ""
+	}
+	return errorReplacer.Replace(err.Error())
+}

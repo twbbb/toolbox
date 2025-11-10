@@ -37,8 +37,34 @@ func ListenForSIGTERM(ctx context.Context, cancel context.CancelFunc, callback f
 	}()
 }
 
-// GuessFileType 根据文件头猜测文件类型
+// GuessFileType 根据文件头猜测文件类型，支持普通文件和base64数据URI格式
 func GuessFileType(buffer []byte) (string, error) {
+	if len(buffer) < 8 {
+		return "", fmt.Errorf("buffer too short")
+	}
+
+	// 检查是否是base64数据URI格式
+	if bytes.HasPrefix(buffer, []byte("data:")) {
+		// 查找base64数据开始位置
+		base64Start := bytes.Index(buffer, []byte("base64,"))
+		if base64Start != -1 {
+			// 提取base64数据部分
+			base64Data := buffer[base64Start+7:]
+			if len(base64Data) < 8 {
+				return "", fmt.Errorf("base64 data too short")
+			}
+			
+			// 对base64数据部分进行文件类型检测
+			return detectFileTypeFromContent(base64Data)
+		}
+	}
+
+	// 如果不是base64格式，直接检测原始内容
+	return detectFileTypeFromContent(buffer)
+}
+
+// detectFileTypeFromContent 根据文件内容检测文件类型
+func detectFileTypeFromContent(buffer []byte) (string, error) {
 	if len(buffer) < 8 {
 		return "", fmt.Errorf("buffer too short")
 	}

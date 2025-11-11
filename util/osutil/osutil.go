@@ -37,6 +37,49 @@ func ListenForSIGTERM(ctx context.Context, cancel context.CancelFunc, callback f
 	}()
 }
 
+// IsPdfFile 检测是否为PDF文件
+func IsPdfFile(buffer []byte) (bool, error) {
+	if len(buffer) < 8 {
+		return false, fmt.Errorf("buffer too short")
+	}
+
+	// 检查是否是base64数据URI格式
+	if bytes.HasPrefix(buffer, []byte("data:")) {
+		// 查找base64数据开始位置
+		base64Start := bytes.Index(buffer, []byte("base64,"))
+		if base64Start != -1 {
+			// 提取base64数据部分
+			base64Data := buffer[base64Start+7:]
+			if len(base64Data) < 8 {
+				return false, fmt.Errorf("base64 data too short")
+			}
+
+			// 对base64数据部分进行文件类型检测
+			return detectPdfFile(base64Data)
+		}
+	}
+	// 如果不是base64格式，直接检测原始内容
+	return detectPdfFile(buffer)
+}
+
+func detectPdfFile(buffer []byte) (bool, error) {
+	if len(buffer) < 8 {
+		return false, fmt.Errorf("buffer too short")
+	}
+
+	// 剥离各种BOM (Byte Order Mark)
+	data := stripBOM(buffer)
+
+	// 确保剥离BOM后数据仍然足够长
+	if len(data) < 4 {
+		return false, fmt.Errorf("buffer too short after BOM removal")
+	}
+	if isPDFFile(data) {
+		return true, nil
+	}
+	return false, nil
+}
+
 // GuessFileType 根据文件头猜测文件类型，支持普通文件和base64数据URI格式
 func GuessFileType(buffer []byte) (string, error) {
 	if len(buffer) < 8 {
@@ -53,7 +96,7 @@ func GuessFileType(buffer []byte) (string, error) {
 			if len(base64Data) < 8 {
 				return "", fmt.Errorf("base64 data too short")
 			}
-			
+
 			// 对base64数据部分进行文件类型检测
 			return detectFileTypeFromContent(base64Data)
 		}
@@ -79,7 +122,7 @@ func detectFileTypeFromContent(buffer []byte) (string, error) {
 
 	// 第一优先级：检测二进制文件格式（有明确的魔数）
 	// 这些格式不会被误判为文本
-	
+
 	// JPEG
 	if bytes.HasPrefix(data, []byte{0xFF, 0xD8, 0xFF}) {
 		return "jpg", nil
@@ -131,7 +174,7 @@ func detectFileTypeFromContent(buffer []byte) (string, error) {
 	}
 
 	// MP3 (ID3v2标签或MPEG帧)
-	if bytes.HasPrefix(data, []byte("ID3")) || 
+	if bytes.HasPrefix(data, []byte("ID3")) ||
 		(len(data) >= 2 && (data[0] == 0xFF && (data[1]&0xE0) == 0xE0)) {
 		return "mp3", nil
 	}
@@ -206,21 +249,21 @@ func stripBOM(buffer []byte) []byte {
 	}
 
 	// 检查UTF-32 LE BOM (4字节): FF FE 00 00
-	if len(buffer) >= 4 && 
-		buffer[0] == 0xFF && buffer[1] == 0xFE && 
+	if len(buffer) >= 4 &&
+		buffer[0] == 0xFF && buffer[1] == 0xFE &&
 		buffer[2] == 0x00 && buffer[3] == 0x00 {
 		return buffer[4:]
 	}
 
 	// 检查UTF-32 BE BOM (4字节): 00 00 FE FF
-	if len(buffer) >= 4 && 
-		buffer[0] == 0x00 && buffer[1] == 0x00 && 
+	if len(buffer) >= 4 &&
+		buffer[0] == 0x00 && buffer[1] == 0x00 &&
 		buffer[2] == 0xFE && buffer[3] == 0xFF {
 		return buffer[4:]
 	}
 
 	// 检查UTF-8 BOM (3字节): EF BB BF
-	if len(buffer) >= 3 && 
+	if len(buffer) >= 3 &&
 		buffer[0] == 0xEF && buffer[1] == 0xBB && buffer[2] == 0xBF {
 		return buffer[3:]
 	}
@@ -246,7 +289,7 @@ func isTextFile(data []byte) bool {
 	if checkLen > 100 {
 		checkLen = 100
 	}
-	
+
 	for i := 0; i < checkLen; i++ {
 		b := data[i]
 		// 允许的字符：可打印ASCII字符(32-126)、制表符(9)、换行符(10)、回车符(13)
@@ -265,13 +308,13 @@ func isTextFile(data []byte) bool {
 // 根据PDF规范，PDF标记应该在文件的前1024字节内
 func isPDFFile(data []byte) bool {
 	pdfSignature := []byte{0x25, 0x50, 0x44, 0x46} // %PDF
-	
+
 	// 搜索范围：前512字节或整个数据（取较小值）
 	searchLen := len(data)
 	if searchLen > 512 {
 		searchLen = 512
 	}
-	
+
 	// 在搜索范围内查找PDF标记
 	idx := bytes.Index(data[:searchLen], pdfSignature)
 	return idx != -1
@@ -289,30 +332,30 @@ func isCSVFile(data []byte) bool {
 	if checkLen > 500 {
 		checkLen = 500
 	}
-	
+
 	// 必须是文本文件
 	if !isTextFile(data) {
 		return false
 	}
-	
+
 	// 统计换行符和分隔符
 	lineCount := 0
 	separatorCount := 0
-	
+
 	for i := 0; i < checkLen; i++ {
 		b := data[i]
-		
+
 		// 统计换行符
 		if b == '\n' {
 			lineCount++
 		}
-		
+
 		// 统计分隔符
 		if b == ',' || b == ';' || b == '\t' {
 			separatorCount++
 		}
 	}
-	
+
 	// CSV文件必须有至少2行数据（表头+数据行）
 	// 并且分隔符数量要足够多（至少每行平均有1个分隔符）
 	return lineCount >= 2 && separatorCount >= lineCount

@@ -159,8 +159,9 @@ func detectFileTypeFromContent(buffer []byte) (string, error) {
 	}
 
 	// 第二优先级：检测有明确特征的文本格式
-	// pdf (支持带BOM和不带BOM的PDF)
-	if bytes.HasPrefix(data, []byte{0x25, 0x50, 0x44, 0x46}) {
+	// pdf (支持带BOM和不带BOM的PDF，以及前面有垃圾数据的PDF)
+	// PDF标记可能不在文件开头，搜索前512字节
+	if isPDFFile(data) {
 		return "pdf", nil
 	}
 
@@ -257,6 +258,23 @@ func isTextFile(data []byte) bool {
 		}
 	}
 	return true
+}
+
+// isPDFFile 检测是否为PDF文件
+// PDF文件以 %PDF- 开头，但可能前面有一些垃圾数据
+// 根据PDF规范，PDF标记应该在文件的前1024字节内
+func isPDFFile(data []byte) bool {
+	pdfSignature := []byte{0x25, 0x50, 0x44, 0x46} // %PDF
+	
+	// 搜索范围：前512字节或整个数据（取较小值）
+	searchLen := len(data)
+	if searchLen > 512 {
+		searchLen = 512
+	}
+	
+	// 在搜索范围内查找PDF标记
+	idx := bytes.Index(data[:searchLen], pdfSignature)
+	return idx != -1
 }
 
 // isCSVFile 检测是否为CSV文件

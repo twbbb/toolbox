@@ -69,35 +69,233 @@ func detectFileTypeFromContent(buffer []byte) (string, error) {
 		return "", fmt.Errorf("buffer too short")
 	}
 
-	// pdf
-	if bytes.HasPrefix(buffer, []byte{0x25, 0x50, 0x44, 0x46}) {
-		return "pdf", nil
+	// 剥离各种BOM (Byte Order Mark)
+	data := stripBOM(buffer)
+
+	// 确保剥离BOM后数据仍然足够长
+	if len(data) < 4 {
+		return "", fmt.Errorf("buffer too short after BOM removal")
 	}
 
+	// 第一优先级：检测二进制文件格式（有明确的魔数）
+	// 这些格式不会被误判为文本
+	
 	// JPEG
-	if bytes.HasPrefix(buffer, []byte{0xFF, 0xD8, 0xFF}) {
+	if bytes.HasPrefix(data, []byte{0xFF, 0xD8, 0xFF}) {
 		return "jpg", nil
 	}
 
 	// PNG
-	if bytes.HasPrefix(buffer, []byte{0x89, 0x50, 0x4E, 0x47}) {
+	if bytes.HasPrefix(data, []byte{0x89, 0x50, 0x4E, 0x47}) {
 		return "png", nil
 	}
 
 	// GIF
-	if bytes.HasPrefix(buffer, []byte{0x47, 0x49, 0x46, 0x38}) {
+	if bytes.HasPrefix(data, []byte{0x47, 0x49, 0x46, 0x38}) {
 		return "gif", nil
 	}
 
 	// BMP
-	if bytes.HasPrefix(buffer, []byte{0x42, 0x4D}) {
+	if bytes.HasPrefix(data, []byte{0x42, 0x4D}) {
 		return "bmp", nil
 	}
 
-	// WEBP
-	if bytes.HasPrefix(buffer, []byte{0x52, 0x49, 0x46, 0x46}) && bytes.HasSuffix(buffer, []byte{0x57, 0x45, 0x42, 0x50}) {
-		return "webp", nil
+	// TIFF (小端序)
+	if bytes.HasPrefix(data, []byte{0x49, 0x49, 0x2A, 0x00}) {
+		return "tiff", nil
 	}
 
-	return "", fmt.Errorf("unknown image type")
+	// TIFF (大端序)
+	if bytes.HasPrefix(data, []byte{0x4D, 0x4D, 0x00, 0x2A}) {
+		return "tiff", nil
+	}
+
+	// ZIP压缩文件
+	if bytes.HasPrefix(data, []byte{0x50, 0x4B, 0x03, 0x04}) {
+		return "zip", nil
+	}
+
+	// RAR压缩文件
+	if bytes.HasPrefix(data, []byte{0x52, 0x61, 0x72, 0x21, 0x1A, 0x07, 0x00}) {
+		return "rar", nil
+	}
+
+	// 7Z压缩文件
+	if bytes.HasPrefix(data, []byte{0x37, 0x7A, 0xBC, 0xAF, 0x27, 0x1C}) {
+		return "7z", nil
+	}
+
+	// GZ压缩文件
+	if bytes.HasPrefix(data, []byte{0x1F, 0x8B}) {
+		return "gz", nil
+	}
+
+	// MP3 (ID3v2标签或MPEG帧)
+	if bytes.HasPrefix(data, []byte("ID3")) || 
+		(len(data) >= 2 && (data[0] == 0xFF && (data[1]&0xE0) == 0xE0)) {
+		return "mp3", nil
+	}
+
+	// RIFF容器格式需要检查子类型
+	if bytes.HasPrefix(data, []byte{0x52, 0x49, 0x46, 0x46}) && len(data) >= 12 {
+		// WAV文件
+		if bytes.Equal(data[8:12], []byte{0x57, 0x41, 0x56, 0x45}) {
+			return "wav", nil
+		}
+		// AVI文件
+		if bytes.Equal(data[8:12], []byte{0x41, 0x56, 0x49, 0x20}) {
+			return "avi", nil
+		}
+		// WEBP
+		if bytes.Equal(data[8:12], []byte{0x57, 0x45, 0x42, 0x50}) {
+			return "webp", nil
+		}
+	}
+
+	// MP4文件
+	if (len(data) >= 12 && bytes.Equal(data[4:8], []byte("ftyp"))) ||
+		bytes.HasPrefix(data, []byte{0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70}) {
+		return "mp4", nil
+	}
+
+	// 第二优先级：检测有明确特征的文本格式
+	// pdf (支持带BOM和不带BOM的PDF)
+	if bytes.HasPrefix(data, []byte{0x25, 0x50, 0x44, 0x46}) {
+		return "pdf", nil
+	}
+
+	// JSON文件
+	if bytes.HasPrefix(data, []byte("{")) || bytes.HasPrefix(data, []byte("[")) {
+		return "json", nil
+	}
+
+	// XML文件
+	if bytes.HasPrefix(data, []byte("<?xml")) {
+		return "xml", nil
+	}
+
+	// HTML文件
+	if bytes.HasPrefix(data, []byte("<!DOCTYPE html")) || bytes.HasPrefix(data, []byte("<html")) {
+		return "html", nil
+	}
+
+	// 第三优先级：CSV文件（需要更严格的判断）
+	if isCSVFile(data) {
+		return "csv", nil
+	}
+
+	// 第四优先级：普通文本文件（兜底）
+	if isTextFile(data) {
+		return "txt", nil
+	}
+
+	return "", fmt.Errorf("unknown file type")
+}
+
+// stripBOM 剥离各种BOM (Byte Order Mark)标记
+// 支持的BOM类型：
+// - UTF-8: EF BB BF
+// - UTF-16 LE: FF FE
+// - UTF-16 BE: FE FF
+// - UTF-32 LE: FF FE 00 00
+// - UTF-32 BE: 00 00 FE FF
+func stripBOM(buffer []byte) []byte {
+	if len(buffer) < 2 {
+		return buffer
+	}
+
+	// 检查UTF-32 LE BOM (4字节): FF FE 00 00
+	if len(buffer) >= 4 && 
+		buffer[0] == 0xFF && buffer[1] == 0xFE && 
+		buffer[2] == 0x00 && buffer[3] == 0x00 {
+		return buffer[4:]
+	}
+
+	// 检查UTF-32 BE BOM (4字节): 00 00 FE FF
+	if len(buffer) >= 4 && 
+		buffer[0] == 0x00 && buffer[1] == 0x00 && 
+		buffer[2] == 0xFE && buffer[3] == 0xFF {
+		return buffer[4:]
+	}
+
+	// 检查UTF-8 BOM (3字节): EF BB BF
+	if len(buffer) >= 3 && 
+		buffer[0] == 0xEF && buffer[1] == 0xBB && buffer[2] == 0xBF {
+		return buffer[3:]
+	}
+
+	// 检查UTF-16 LE BOM (2字节): FF FE
+	if buffer[0] == 0xFF && buffer[1] == 0xFE {
+		return buffer[2:]
+	}
+
+	// 检查UTF-16 BE BOM (2字节): FE FF
+	if buffer[0] == 0xFE && buffer[1] == 0xFF {
+		return buffer[2:]
+	}
+
+	// 没有BOM，返回原始数据
+	return buffer
+}
+
+// isTextFile 检测是否为文本文件
+func isTextFile(data []byte) bool {
+	// 检查前100个字节是否都是可打印字符或常见控制字符
+	checkLen := len(data)
+	if checkLen > 100 {
+		checkLen = 100
+	}
+	
+	for i := 0; i < checkLen; i++ {
+		b := data[i]
+		// 允许的字符：可打印ASCII字符(32-126)、制表符(9)、换行符(10)、回车符(13)
+		if b < 32 && b != 9 && b != 10 && b != 13 {
+			return false
+		}
+		if b > 126 {
+			return false
+		}
+	}
+	return true
+}
+
+// isCSVFile 检测是否为CSV文件
+// CSV文件的特征：
+// 1. 包含分隔符（逗号、分号或制表符）
+// 2. 有多行数据
+// 3. 第一行通常是表头
+// 4. 每行的字段数量相对一致
+func isCSVFile(data []byte) bool {
+	// 检查前500个字节或全部数据
+	checkLen := len(data)
+	if checkLen > 500 {
+		checkLen = 500
+	}
+	
+	// 必须是文本文件
+	if !isTextFile(data) {
+		return false
+	}
+	
+	// 统计换行符和分隔符
+	lineCount := 0
+	separatorCount := 0
+	
+	for i := 0; i < checkLen; i++ {
+		b := data[i]
+		
+		// 统计换行符
+		if b == '\n' {
+			lineCount++
+		}
+		
+		// 统计分隔符
+		if b == ',' || b == ';' || b == '\t' {
+			separatorCount++
+		}
+	}
+	
+	// CSV文件必须有至少2行数据（表头+数据行）
+	// 并且分隔符数量要足够多（至少每行平均有1个分隔符）
+	return lineCount >= 2 && separatorCount >= lineCount
 }

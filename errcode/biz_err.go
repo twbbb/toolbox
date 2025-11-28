@@ -14,6 +14,8 @@ const (
 	JING_QI             BizErrType = 1 // 经期
 	CUST_SUPPORT        BizErrType = 2 // 反馈平台
 	JING_QI_TASK_NOCALC BizErrType = 3 // 经期无计算的定时任务
+	ALARM_TOOLS         BizErrType = 4 // 告警工具
+
 )
 
 // GetBizErr 获取错误

@@ -58,8 +58,13 @@ func TestReportMgr2(t *testing.T) {
 
 func TestReportMgr3(t *testing.T) {
 	ctx := context.Background()
+	// 0是图片，1是pdf, 2是文本
+	// 	REPORT_TYPE_UNSPECIFIED = 0 // 未指定
+	//	REPORT_TYPE_EXAM        = 1 // 检查报告
+	//	REPORT_TYPE_LAB         = 2 // 检验报告
+	//	REPORT_TYPE_RECORD      = 3 // 病例文书报告
 	url, _ := BuildHealthManagerURLForOcrCenter(ctx, "1", "diagnosis",
-		"14ARD080f_eOVH8ioynW4gvfy_WnxP0J7elMUqHXGrE_ZVrBKsTMs9srXVpTSGw8rlmiNGV",
-		"@athooJQLI1ozwL3eroVjJUoef6w7IqzMm8", "", 2, "", "豪贵测试医院", 0, "tZa8k5X7HO5vT9Iw")
+		"14ARD08NrtyeXnpCqME7KBG81En7dzBDGojZcU52HcVs_HZXoahhHxCPgpXeLTWjJg-vLNF",
+		"@athooJQLI1ozwL3eroVjJUoef6w7IqzMm8", "", 1, "", "豪贵测试医院", 0, "tZa8k5X7HO5vT9Iw")
 	fmt.Println(url)
 }

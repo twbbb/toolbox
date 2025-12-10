@@ -165,6 +165,41 @@ func BuildHealthManagerURL(
 	return fullURL, nil
 }
 
+// BuildHealthManagerURLWithChannel 构建完整的健康管理URL，支持channel参数
+func BuildHealthManagerURLWithChannel(
+	isBizReport string,
+	bizId string,
+	channel string,
+	otherBizReportInfo string,
+	fileName string,
+	fileType int32,
+	fileUrl string,
+	orgName string,
+	reportType int32,
+) (string, error) {
+	// 构建healthManagerParams JSON字符串
+	healthManagerParams, err := BuildHealthManagerParams(
+		otherBizReportInfo,
+		fileName,
+		fileType,
+		fileUrl,
+		orgName,
+		reportType,
+	)
+	if err != nil {
+		return "", err
+	}
+
+	// 对JSON字符串进行URL编码
+	encodedParams := url.QueryEscape(healthManagerParams)
+
+	// 构建完整URL，添加channel参数
+	fullURL := fmt.Sprintf("pages/health-manager/home/main?isBizReport=%s&bizId=%s&channel=%s&healthManagerParams=%s",
+		isBizReport, bizId, channel, encodedParams)
+
+	return fullURL, nil
+}
+
 // BuildHealthManagerURLForOcrCenter 构建完整的健康管理URL, fileType对应OcrCenter里面的
 func BuildHealthManagerURLForOcrCenter(
 	ctx context.Context,
@@ -191,6 +226,45 @@ func BuildHealthManagerURLForOcrCenter(
 	fullURL, err := BuildHealthManagerURL(
 		isBizReport,
 		bizId,
+		otherBizReportInfo,
+		fileName,
+		fileType,
+		fileUrl,
+		orgName,
+		reportType,
+	)
+	return fullURL, err
+}
+
+// BuildHealthManagerURLForOcrCenterWithChannel 构建完整的健康管理URL，支持channel参数，fileType对应OcrCenter里面的
+func BuildHealthManagerURLForOcrCenterWithChannel(
+	ctx context.Context,
+	isBizReport string,
+	bizId string,
+	channel string,
+	rid string,
+	sthid string,
+	fileName string,
+	fileType int32,
+	fileUrl string,
+	orgName string,
+	reportType int32,
+	aeskey string) (string, error) {
+
+	// 从ocrcenter过来的 0是图片，1是pdf, 2是文本
+	switch fileType {
+	case 0:
+		fileType = FILE_TYPE_IMAGE
+	case 1:
+		fileType = FILE_TYPE_PDF
+	case 2:
+		fileType = FILE_TYPE_TEXT
+	}
+	otherBizReportInfo, err := EncReportInfo(ctx, aeskey, rid, fileType, sthid, bizId)
+	fullURL, err := BuildHealthManagerURLWithChannel(
+		isBizReport,
+		bizId,
+		channel,
 		otherBizReportInfo,
 		fileName,
 		fileType,

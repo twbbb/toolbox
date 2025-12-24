@@ -109,7 +109,7 @@ func runDistributProcess(
 ) (err error) {
 
 	// 创建可以取消的上下文
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(trpc.BackgroundContext())
 	defer cancel() // 确保上下文在函数退出时取消
 
 	begin := time.Now()

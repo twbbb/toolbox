@@ -103,3 +103,10 @@ func GetErrMsg(code int) string {
 func GetErr(code int) error {
 	return errs.New(code, GetErrMsg(code))
 }
+
+// GetCodeMsg 获取错误码和错误信息
+func GetCodeMsg(err error) (int, string) {
+	code := errs.Code(err)
+	msg := errs.Msg(err)
+	return code, msg
+}

@@ -105,8 +105,8 @@ func GetErr(code int) error {
 }
 
 // GetCodeMsg 获取错误码和错误信息
-func GetCodeMsg(err error) (int, string) {
+func GetCodeMsg(err error) (int32, string) {
 	code := errs.Code(err)
 	msg := errs.Msg(err)
-	return code, msg
+	return int32(code), msg
 }

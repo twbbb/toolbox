@@ -86,7 +86,6 @@ func (be *BizErr) GetCodeErr(clientCode int, msg ...string) error {
 
 	if len(msg) > 0 {
 		for index, v := range msg {
-			be.ErrMsgMap[clientCode] = v
 			errMsg = strings.ReplaceAll(errMsg, fmt.Sprintf("{%d}", index), v)
 		}
 	}

@@ -36,8 +36,11 @@ type DistributLock interface {
 type TaskDistributFunc struct {
 	// 任务名称
 	TaskName string
-	// 任务执行间隔
+	// 任务执行间隔（秒），与 CronExpr 二选一，CronExpr 优先
 	CornDuration int
+	// Cron 表达式，支持秒级（6位）和分钟级（5位），优先级高于 CornDuration
+	// 示例：每5分钟 "0 */5 * * * *"，每天凌晨1点 "0 0 1 * * *"
+	CronExpr string
 	// 任务执行函数
 	TaskFunc func(ctx context.Context) error
 	// 启动执行

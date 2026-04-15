@@ -14,6 +14,7 @@ import (
 	"git.woa.com/th-go/toolbox/trpcutil/entity"
 	"git.woa.com/th-go/toolbox/trpcutil/monitor"
 	"git.woa.com/th-go/toolbox/util/osutil"
+	"github.com/robfig/cron/v3"
 )
 
 // InitTaskTickerEnv 初始定时任务，包含env
@@ -49,6 +50,16 @@ func InitTaskTicker(
 	return DoDistributTask(taskFunc)
 }
 
+// InitTaskTickerWithCron 初始定时任务，支持 cron 表达式
+func InitTaskTickerWithCron(
+	runFunc func(ctx context.Context) error, taskName string, cronExpr string, baseLockKey string,
+	lock entity.DistributLock,
+) error {
+	taskFunc := GetDefaultTaskDistributFunc(runFunc, taskName, 0, baseLockKey, lock)
+	taskFunc.CronExpr = cronExpr
+	return DoDistributTask(taskFunc)
+}
+
 // GetDefaultTaskDistributFunc 获取默认的分布式定时任务
 func GetDefaultTaskDistributFunc(
 	runFunc func(ctx context.Context) error, taskName string, secondDuration int, baseLockKey string,
@@ -69,6 +80,7 @@ func GetDefaultTaskDistributFunc(
 }
 
 // DoDistributTask 执行分布式定时任务
+// 若 taskFunc.CronExpr 不为空则使用 cron 表达式调度，否则使用 CornDuration 秒级间隔
 func DoDistributTask(taskFunc entity.TaskDistributFunc) error {
 	initRequestId := fmt.Sprintf("%s_%d", taskFunc.TaskName, 0)
 	if taskFunc.InitStart {
@@ -76,7 +88,43 @@ func DoDistributTask(taskFunc entity.TaskDistributFunc) error {
 			return err
 		}
 	}
-	// 创建一个计时器
+
+	if taskFunc.CronExpr != "" {
+		return doDistributTaskByCron(taskFunc)
+	}
+	return doDistributTaskByTicker(taskFunc)
+}
+
+// doDistributTaskByCron 使用 cron 表达式调度
+func doDistributTaskByCron(taskFunc entity.TaskDistributFunc) error {
+	// 支持秒级（6位）cron 表达式
+	c := cron.New(cron.WithSeconds())
+	runTimes := 0
+	var isRunning bool
+
+	_, err := c.AddFunc(taskFunc.CronExpr, func() {
+		runTimes++
+		if runTimes >= math.MaxInt32 {
+			runTimes = 1
+		}
+		requestId := fmt.Sprintf("%s_%d", taskFunc.TaskName, runTimes)
+		if isRunning {
+			log.Info("task is running：%s", requestId)
+			return
+		}
+		isRunning = true
+		runDistributProcess(taskFunc, requestId)
+		isRunning = false
+	})
+	if err != nil {
+		return fmt.Errorf("cron expr invalid [%s]: %w", taskFunc.CronExpr, err)
+	}
+	c.Start()
+	return nil
+}
+
+// doDistributTaskByTicker 使用秒级 ticker 调度（原有逻辑）
+func doDistributTaskByTicker(taskFunc entity.TaskDistributFunc) error {
 	go func() {
 		ticks := time.NewTicker(time.Duration(taskFunc.CornDuration) * time.Second)
 		tick := ticks.C
@@ -121,10 +169,7 @@ func runDistributProcess(
 
 	// 定时任务，防止重复执行，比如多台机器，3分钟只能执行一次
 	cornKey := taskFunc.BaseLockKey + taskFunc.TaskName + ":corn"
-	lockTime := taskFunc.CornDuration
-	if lockTime > 3 {
-		lockTime = lockTime - 2
-	}
+	lockTime := calcLockTime(taskFunc)
 	lockState := taskFunc.DistributLock.Lock(ctx, cornKey, time.Second*time.Duration(lockTime))
 	if !lockState {
 		log.DebugContextf(ctx, "runDistributProcess corn fail:%s", cornKey)
@@ -186,4 +231,31 @@ func runDistributProcess(
 	monitor.ReportCache(requestId, taskFunc.ReportName, taskFunc.TaskName, true, getUseTime(begin))
 	log.InfoContextf(ctx, "runDistributProcess end")
 	return err
+}
+
+// calcLockTime 计算分布式锁的持有时间（秒）
+// - 若使用 CronExpr，通过解析表达式计算相邻两次触发的间隔
+// - 否则由 CornDuration 推算（减去2秒缓冲）
+func calcLockTime(taskFunc entity.TaskDistributFunc) int {
+	if taskFunc.CronExpr != "" {
+		parser := cron.NewParser(
+			cron.Second | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow,
+		)
+		schedule, err := parser.Parse(taskFunc.CronExpr)
+		if err == nil {
+			now := time.Now()
+			next1 := schedule.Next(now)
+			next2 := schedule.Next(next1)
+			intervalSec := int(next2.Sub(next1).Seconds())
+			if intervalSec > 2 {
+				return intervalSec - 2
+			}
+			return intervalSec
+		}
+	}
+	lockTime := taskFunc.CornDuration
+	if lockTime > 3 {
+		lockTime = lockTime - 2
+	}
+	return lockTime
 }

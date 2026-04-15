@@ -50,6 +50,30 @@ func InitTaskTicker(
 	return DoDistributTask(taskFunc)
 }
 
+// InitTaskTickerEnvWithCron 初始定时任务，包含env，支持 cron 表达式
+func InitTaskTickerEnvWithCron(
+	runFunc func(ctx context.Context) error, taskName string, cronExpr string,
+	lock entity.DistributLock,
+) error {
+	baseLockKey := ""
+	if trpc.GlobalConfig() != nil {
+		if trpc.GlobalConfig().Server.Server != "" {
+			baseLockKey = trpc.GlobalConfig().Server.Server + ":"
+		} else {
+			baseLockKey = "task:"
+		}
+		if trpc.GlobalConfig().Global.EnvName != "" {
+			baseLockKey = baseLockKey + trpc.GlobalConfig().Global.EnvName + ":"
+		}
+	}
+
+	if baseLockKey == "" {
+		baseLockKey = "task:"
+	}
+
+	return InitTaskTickerWithCron(runFunc, taskName, cronExpr, baseLockKey, lock)
+}
+
 // InitTaskTickerWithCron 初始定时任务，支持 cron 表达式
 func InitTaskTickerWithCron(
 	runFunc func(ctx context.Context) error, taskName string, cronExpr string, baseLockKey string,

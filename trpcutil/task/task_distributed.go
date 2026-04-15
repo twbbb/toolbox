@@ -252,8 +252,9 @@ func runDistributProcess(
 	if err != nil {
 		log.ErrorContextf(ctx, "runProcess err%+v", err)
 	}
-	monitor.ReportCache(requestId, taskFunc.ReportName, taskFunc.TaskName, true, getUseTime(begin))
-	log.InfoContextf(ctx, "runDistributProcess end")
+	useTime := getUseTime(begin)
+	monitor.ReportCache(requestId, taskFunc.ReportName, taskFunc.TaskName, true, useTime)
+	log.InfoContextf(ctx, "runDistributProcess end, taskName: %s, cost: %.3fs", taskFunc.TaskName, useTime)
 	return err
 }
 

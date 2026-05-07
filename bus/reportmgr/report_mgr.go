@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"git.code.oa.com/trpc-go/trpc-go/log"
-	"git.woa.com/th-go/toolbox/component/aesutil"
 	"net/url"
 	"strconv"
+
+	"git.code.oa.com/trpc-go/trpc-go/log"
+	"git.woa.com/th-go/toolbox/component/aesutil"
 )
 
 // ReportInfo 报告信息结构体
@@ -273,4 +274,17 @@ func BuildHealthManagerURLForOcrCenterWithChannel(
 		reportType,
 	)
 	return fullURL, err
+}
+
+// BuildHealthManagerURLByPatientID 构建完整的健康管理URL
+func BuildHealthManagerURLByPatientID(
+	patientId string,
+	bizId string,
+	channel string,
+) (string, error) {
+	// 构建完整URL，添加channel参数
+	fullURL := fmt.Sprintf("pages/health-manager/home/main?patientId=%s&bizId=%s&channel=%s",
+		patientId, bizId, channel)
+
+	return fullURL, nil
 }

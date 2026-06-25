@@ -224,11 +224,27 @@ type HealthManagerURLOption struct {
 }
 
 // BuildHealthManagerURLForOcrCenter 构建完整的健康管理URL, fileType对应OcrCenter里面的
+// 当 encOpts 为 nil 时，不进行加密，直接构建URL（不包含 healthManagerParams）
 func BuildHealthManagerURLForOcrCenter(
 	ctx context.Context,
 	encOpts *ReportEncryptOption,
 	urlOpts *HealthManagerURLOption,
 ) (string, error) {
+
+	// 构建完整URL
+	fullURL := fmt.Sprintf("pages/health-manager/home/main?isBizReport=%s&bizId=%s",
+		urlOpts.IsBizReport, urlOpts.BizId)
+	if urlOpts.Channel != "" {
+		fullURL += fmt.Sprintf("&channel=%s", urlOpts.Channel)
+	}
+	if urlOpts.GroupId != "" {
+		fullURL += fmt.Sprintf("&groupId=%s", urlOpts.GroupId)
+	}
+
+	// encOpts 为空时不需要加密，直接返回URL
+	if encOpts == nil {
+		return fullURL, nil
+	}
 
 	fileType := encOpts.FileType
 	// 从ocrcenter过来的 0是图片，1是pdf, 2是文本
@@ -260,16 +276,6 @@ func BuildHealthManagerURLForOcrCenter(
 
 	// 对JSON字符串进行URL编码
 	encodedParams := url.QueryEscape(healthManagerParams)
-
-	// 构建完整URL
-	fullURL := fmt.Sprintf("pages/health-manager/home/main?isBizReport=%s&bizId=%s",
-		urlOpts.IsBizReport, urlOpts.BizId)
-	if urlOpts.Channel != "" {
-		fullURL += fmt.Sprintf("&channel=%s", urlOpts.Channel)
-	}
-	if urlOpts.GroupId != "" {
-		fullURL += fmt.Sprintf("&groupId=%s", urlOpts.GroupId)
-	}
 	fullURL += fmt.Sprintf("&healthManagerParams=%s", encodedParams)
 
 	return fullURL, nil

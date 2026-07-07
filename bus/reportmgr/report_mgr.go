@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"git.code.oa.com/trpc-go/trpc-go/log"
-	"git.woa.com/th-go/toolbox/component/aesutil"
 	"net/url"
 	"strconv"
+
+	"git.code.oa.com/trpc-go/trpc-go/log"
+	"git.woa.com/th-go/toolbox/component/aesutil"
 )
 
 // ReportInfo 报告信息结构体
@@ -200,19 +201,52 @@ func BuildHealthManagerURLWithChannel(
 	return fullURL, nil
 }
 
+// ReportEncryptOption 用于生成otherBizReportInfo的加密参数
+type ReportEncryptOption struct {
+	Rid      string // 报告ID（必填）
+	Sthid    string // 用户sthid（必填）
+	FileType int32  // 文件类型 OcrCenter: 0-图片，1-pdf，2-文本（必填）
+	BizId    string // 业务ID，作为biz字段加密（必填）
+	AesKey   string // AES加密密钥（必填）
+}
+
+// HealthManagerURLOption 构建健康管理URL的参数
+type HealthManagerURLOption struct {
+	IsBizReport string // 是否业务报告（必填）
+	BizId       string // 业务ID（必填）
+	Channel     string // 渠道（可选）
+	GroupId     string // 分组ID（可选）
+	FileName    string // 文件名（可选）
+	FileType    int32  // 文件类型 OcrCenter: 0-图片，1-pdf，2-文本（必填）
+	FileUrl     string // 文件地址（可选）
+	OrgName     string // 机构名（可选）
+	ReportType  int32  // 报告类型（可选）
+}
+
 // BuildHealthManagerURLForOcrCenter 构建完整的健康管理URL, fileType对应OcrCenter里面的
+// 当 encOpts 为 nil 时，不进行加密，直接构建URL（不包含 healthManagerParams）
 func BuildHealthManagerURLForOcrCenter(
 	ctx context.Context,
-	isBizReport string,
-	bizId string,
-	rid string,
-	sthid string,
-	fileName string,
-	fileType int32,
-	fileUrl string,
-	orgName string,
-	reportType int32, aeskey string) (string, error) {
+	encOpts *ReportEncryptOption,
+	urlOpts *HealthManagerURLOption,
+) (string, error) {
 
+	// 构建完整URL
+	fullURL := fmt.Sprintf("pages/health-manager/home/main?isBizReport=%s&bizId=%s",
+		urlOpts.IsBizReport, urlOpts.BizId)
+	if urlOpts.Channel != "" {
+		fullURL += fmt.Sprintf("&channel=%s", urlOpts.Channel)
+	}
+	if urlOpts.GroupId != "" {
+		fullURL += fmt.Sprintf("&groupId=%s", urlOpts.GroupId)
+	}
+
+	// encOpts 为空时不需要加密，直接返回URL
+	if encOpts == nil {
+		return fullURL, nil
+	}
+
+	fileType := encOpts.FileType
 	// 从ocrcenter过来的 0是图片，1是pdf, 2是文本
 	switch fileType {
 	case 0:
@@ -222,21 +256,33 @@ func BuildHealthManagerURLForOcrCenter(
 	case 2:
 		fileType = FILE_TYPE_TEXT
 	}
-	otherBizReportInfo, err := EncReportInfo(ctx, aeskey, rid, fileType, sthid, bizId)
-	fullURL, err := BuildHealthManagerURL(
-		isBizReport,
-		bizId,
+	otherBizReportInfo, err := EncReportInfo(ctx, encOpts.AesKey, encOpts.Rid, fileType, encOpts.Sthid, encOpts.BizId)
+	if err != nil {
+		return "", err
+	}
+
+	// 构建healthManagerParams JSON字符串
+	healthManagerParams, err := BuildHealthManagerParams(
 		otherBizReportInfo,
-		fileName,
+		urlOpts.FileName,
 		fileType,
-		fileUrl,
-		orgName,
-		reportType,
+		urlOpts.FileUrl,
+		urlOpts.OrgName,
+		urlOpts.ReportType,
 	)
-	return fullURL, err
+	if err != nil {
+		return "", err
+	}
+
+	// 对JSON字符串进行URL编码
+	encodedParams := url.QueryEscape(healthManagerParams)
+	fullURL += fmt.Sprintf("&healthManagerParams=%s", encodedParams)
+
+	return fullURL, nil
 }
 
 // BuildHealthManagerURLForOcrCenterWithChannel 构建完整的健康管理URL，支持channel参数，fileType对应OcrCenter里面的
+// Deprecated: 请使用 BuildHealthManagerURLForOcrCenter，通过 HealthManagerURLOption.Channel 设置channel
 func BuildHealthManagerURLForOcrCenterWithChannel(
 	ctx context.Context,
 	isBizReport string,
@@ -251,26 +297,33 @@ func BuildHealthManagerURLForOcrCenterWithChannel(
 	reportType int32,
 	aeskey string) (string, error) {
 
-	// 从ocrcenter过来的 0是图片，1是pdf, 2是文本
-	switch fileType {
-	case 0:
-		fileType = FILE_TYPE_IMAGE
-	case 1:
-		fileType = FILE_TYPE_PDF
-	case 2:
-		fileType = FILE_TYPE_TEXT
-	}
-	otherBizReportInfo, err := EncReportInfo(ctx, aeskey, rid, fileType, sthid, bizId)
-	fullURL, err := BuildHealthManagerURLWithChannel(
-		isBizReport,
-		bizId,
-		channel,
-		otherBizReportInfo,
-		fileName,
-		fileType,
-		fileUrl,
-		orgName,
-		reportType,
-	)
-	return fullURL, err
+	return BuildHealthManagerURLForOcrCenter(ctx, &ReportEncryptOption{
+		Rid:      rid,
+		Sthid:    sthid,
+		FileType: fileType,
+		BizId:    bizId,
+		AesKey:   aeskey,
+	}, &HealthManagerURLOption{
+		IsBizReport: isBizReport,
+		BizId:       bizId,
+		Channel:     channel,
+		FileName:    fileName,
+		FileType:    fileType,
+		FileUrl:     fileUrl,
+		OrgName:     orgName,
+		ReportType:  reportType,
+	})
+}
+
+// BuildHealthManagerURLByPatientID 构建完整的健康管理URL
+func BuildHealthManagerURLByPatientID(
+	patientId string,
+	bizId string,
+	channel string,
+) (string, error) {
+	// 构建完整URL，添加channel参数
+	fullURL := fmt.Sprintf("pages/health-manager/home/main?patientId=%s&bizId=%s&channel=%s",
+		patientId, bizId, channel)
+
+	return fullURL, nil
 }

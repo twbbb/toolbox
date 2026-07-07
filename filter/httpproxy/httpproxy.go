@@ -95,6 +95,8 @@ func httpRequest(ctx context.Context, servieName string, method string, req inte
 ) {
 	_, ok := httpProxyArg.ServiceMap[servieName]
 	if !ok {
+
+		log.InfoContextf(ctx, "serviceMap not found|%s|%s", servieName, method)
 		return false, nil, nil
 	}
 

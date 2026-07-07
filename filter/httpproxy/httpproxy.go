@@ -95,8 +95,14 @@ func httpRequest(ctx context.Context, servieName string, method string, req inte
 ) {
 	_, ok := httpProxyArg.ServiceMap[servieName]
 	if !ok {
-
-		log.InfoContextf(ctx, "serviceMap not found|%s|%s", servieName, method)
+		lowerServiceName := strings.ToLower(servieName)
+		if !strings.Contains(lowerServiceName, "mysql") &&
+			!strings.Contains(lowerServiceName, "redis") &&
+			!strings.Contains(lowerServiceName, "mongo") &&
+			!strings.Contains(lowerServiceName, "kafka") &&
+			!strings.Contains(lowerServiceName, "tdmq") {
+			log.InfoContextf(ctx, "serviceMap not found|%s|%s", servieName, method)
+		}
 		return false, nil, nil
 	}
 

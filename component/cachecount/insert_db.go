@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"git.code.oa.com/trpc-go/trpc-go/log"
 	"gorm.io/gorm"
+	"trpc.group/trpc-go/trpc-go/log"
 )
 
 // CountInsertDb ..

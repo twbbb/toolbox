@@ -4,10 +4,10 @@ package monitor
 import (
 	"context"
 
-	"git.code.oa.com/trpc-go/trpc-go"
-	"git.code.oa.com/trpc-go/trpc-go/log"
-	"git.code.oa.com/trpc-go/trpc-go/metrics"
-	"git.woa.com/th-go/toolbox/util/stringutil"
+	"github.com/twbbb/toolbox/util/stringutil"
+	"trpc.group/trpc-go/trpc-go"
+	"trpc.group/trpc-go/trpc-go/log"
+	"trpc.group/trpc-go/trpc-go/metrics"
 )
 
 // ReportData 方法上报
@@ -32,8 +32,7 @@ func ReportData(ctx context.Context, dims []*metrics.Dimension, name string, isE
 	datas = append(datas, metrics.NewMetrics("avgCost", float64(costTms), metrics.PolicyAVG))
 	datas = append(datas, metrics.NewMetrics("maxCost", float64(costTms), metrics.PolicyMAX))
 
-	rec := metrics.NewMultiDimensionMetrics(dims, datas)
-	rec.Name = name
+	rec := metrics.NewMultiDimensionMetricsX(name, dims, datas)
 
 	if err := metrics.Report(rec); err != nil {
 		log.ErrorContext(

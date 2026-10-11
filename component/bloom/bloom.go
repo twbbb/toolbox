@@ -7,7 +7,7 @@ import (
 	"hash/fnv"
 	"math"
 
-	"git.woa.com/th-go/toolbox/component/bloom/bitset"
+	"github.com/twbbb/toolbox/component/bloom/bitset"
 )
 
 // BloomFilter 布隆过滤

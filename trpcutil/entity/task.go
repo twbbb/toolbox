@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"git.code.oa.com/trpc-go/trpc-go/log"
+	"trpc.group/trpc-go/trpc-go/log"
 )
 
 // TaskFunc 定时任务结构体

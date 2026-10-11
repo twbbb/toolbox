@@ -10,7 +10,7 @@ import (
 	"regexp"
 	"strings"
 
-	"git.code.oa.com/trpc-go/trpc-go/log"
+	"trpc.group/trpc-go/trpc-go/log"
 )
 
 // SimpleBodyParseImpl 解析

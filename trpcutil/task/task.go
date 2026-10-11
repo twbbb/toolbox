@@ -8,11 +8,11 @@ import (
 	"math"
 	"time"
 
-	"git.code.oa.com/trpc-go/trpc-go"
-	"git.code.oa.com/trpc-go/trpc-go/codec"
-	"git.code.oa.com/trpc-go/trpc-go/log"
-	"git.woa.com/th-go/toolbox/trpcutil/entity"
-	"git.woa.com/th-go/toolbox/trpcutil/monitor"
+	"github.com/twbbb/toolbox/trpcutil/entity"
+	"github.com/twbbb/toolbox/trpcutil/monitor"
+	"trpc.group/trpc-go/trpc-go"
+	"trpc.group/trpc-go/trpc-go/codec"
+	"trpc.group/trpc-go/trpc-go/log"
 )
 
 // InitCacheTicker 初始化本地缓存任务

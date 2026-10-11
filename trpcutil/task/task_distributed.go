@@ -8,13 +8,13 @@ import (
 	"math"
 	"time"
 
-	"git.code.oa.com/trpc-go/trpc-go"
-	"git.code.oa.com/trpc-go/trpc-go/codec"
-	"git.code.oa.com/trpc-go/trpc-go/log"
-	"git.woa.com/th-go/toolbox/trpcutil/entity"
-	"git.woa.com/th-go/toolbox/trpcutil/monitor"
-	"git.woa.com/th-go/toolbox/util/osutil"
 	"github.com/robfig/cron/v3"
+	"github.com/twbbb/toolbox/trpcutil/entity"
+	"github.com/twbbb/toolbox/trpcutil/monitor"
+	"github.com/twbbb/toolbox/util/osutil"
+	"trpc.group/trpc-go/trpc-go"
+	"trpc.group/trpc-go/trpc-go/codec"
+	"trpc.group/trpc-go/trpc-go/log"
 )
 
 // InitTaskTickerEnv 初始定时任务，包含env

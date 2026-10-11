@@ -4,9 +4,9 @@ package logcontext
 import (
 	"context"
 
-	"git.code.oa.com/trpc-go/trpc-go/filter"
-	"git.code.oa.com/trpc-go/trpc-go/log"
-	"git.woa.com/th-go/toolbox/trpcutil/trpcmeta"
+	"github.com/twbbb/toolbox/trpcutil/trpcmeta"
+	"trpc.group/trpc-go/trpc-go/filter"
+	"trpc.group/trpc-go/trpc-go/log"
 )
 
 // ServerFilter 被调拦截器的实现

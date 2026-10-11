@@ -4,7 +4,7 @@ package trpcmeta
 import (
 	"context"
 
-	"git.code.oa.com/trpc-go/trpc-go"
+	"trpc.group/trpc-go/trpc-go"
 )
 
 // GetOpenID 从context中获取openID

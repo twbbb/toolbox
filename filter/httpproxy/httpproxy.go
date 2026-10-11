@@ -12,11 +12,11 @@ import (
 	"strings"
 	"time"
 
-	"git.code.oa.com/trpc-go/trpc-go/log"
-	"git.woa.com/th-go/toolbox/filter/httpproxy/bodyparse"
+	"github.com/twbbb/toolbox/filter/httpproxy/bodyparse"
+	"trpc.group/trpc-go/trpc-go/log"
 
-	"git.code.oa.com/trpc-go/trpc-go/codec"
-	"git.code.oa.com/trpc-go/trpc-go/filter"
+	"trpc.group/trpc-go/trpc-go/codec"
+	"trpc.group/trpc-go/trpc-go/filter"
 )
 
 // HttpProxyArg 代理的参数
@@ -41,7 +41,7 @@ func init() {
 		return
 	}
 
-	filter.Register("clientProxy", filter.NoopClientFilter, clientProxy())
+	filter.Register("clientProxy", filter.NoopServerFilter, clientProxy())
 
 }
 

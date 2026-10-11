@@ -5,10 +5,9 @@ import (
 	"context"
 	"os"
 
-	_ "git.code.oa.com/trpc-go/trpc-config-rainbow" // 使用rainbow配置时引入注册
-	"git.code.oa.com/trpc-go/trpc-go/config"
-	rainbowLogger "git.code.oa.com/trpc-go/trpc-go/log"
 	"gopkg.in/yaml.v2"
+	"trpc.group/trpc-go/trpc-go/config"
+	rainbowLogger "trpc.group/trpc-go/trpc-go/log"
 )
 
 // InitCfg 初始化七彩石配置

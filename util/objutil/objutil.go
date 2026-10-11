@@ -3,9 +3,9 @@ package objectutil
 import (
 	"context"
 	"fmt"
-	"git.code.oa.com/trpc-go/trpc-go"
 	"reflect"
 	"strings"
+	"trpc.group/trpc-go/trpc-go"
 )
 
 // ExtractMethodName 提取最后一个 '/' 后的元素

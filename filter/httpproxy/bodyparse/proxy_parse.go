@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"git.code.oa.com/trpc-go/trpc-go/log"
+	"trpc.group/trpc-go/trpc-go/log"
 )
 
 // ProxyBodyParseImpl 解析

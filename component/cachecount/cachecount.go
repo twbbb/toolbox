@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"sync"
 
-	"git.code.oa.com/trpc-go/trpc-go/log"
-	"git.woa.com/th-go/toolbox/trpcutil/task"
 	"github.com/redis/go-redis/v9"
+	"github.com/twbbb/toolbox/trpcutil/task"
+	"trpc.group/trpc-go/trpc-go/log"
 )
 
 // CacheCount 高并发场景下的本地缓存使用次数统计组件

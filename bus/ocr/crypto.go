@@ -12,7 +12,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"git.code.oa.com/trpc-go/trpc-go/log"
+	"trpc.group/trpc-go/trpc-go/log"
 )
 
 // pkcs7Padding

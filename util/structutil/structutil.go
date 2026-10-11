@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"strings"
 
-	"git.code.oa.com/trpc-go/trpc-go/log"
 	"github.com/jinzhu/copier"
+	"trpc.group/trpc-go/trpc-go/log"
 )
 
 // GetStructArrName 提取类数组名称

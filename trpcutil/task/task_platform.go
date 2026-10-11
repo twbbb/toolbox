@@ -6,13 +6,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"git.code.oa.com/trpc-go/trpc-go"
-	"git.code.oa.com/trpc-go/trpc-go/log"
-	"git.woa.com/th-go/toolbox/trpcutil/entity"
-	"git.woa.com/th-go/toolbox/trpcutil/monitor"
+	"github.com/twbbb/toolbox/trpcutil/entity"
+	"github.com/twbbb/toolbox/trpcutil/monitor"
 	"net/http"
 	"runtime/debug"
 	"time"
+	"trpc.group/trpc-go/trpc-go"
+	"trpc.group/trpc-go/trpc-go/log"
 )
 
 // 使用示例：

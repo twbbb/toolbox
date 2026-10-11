@@ -4,8 +4,8 @@ package initdata
 import (
 	"time"
 
-	"git.code.oa.com/trpc-go/trpc-go/client"
-	"git.woa.com/th-go/toolbox/trpcutil/entity"
+	"github.com/twbbb/toolbox/trpcutil/entity"
+	"trpc.group/trpc-go/trpc-go/client"
 )
 
 // GetTrpcOpts 获取trpc的opts

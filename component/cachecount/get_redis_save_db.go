@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"git.code.oa.com/trpc-go/trpc-go/log"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
+	"trpc.group/trpc-go/trpc-go/log"
 )
 
 // GetRedisSaveDBByTable 从Redis获取昨天的计数数据并通过table模式保存到数据库

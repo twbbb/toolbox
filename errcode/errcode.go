@@ -2,7 +2,7 @@
 package errcode
 
 import (
-	"git.code.oa.com/trpc-go/trpc-go/errs"
+	"trpc.group/trpc-go/trpc-go/errs"
 )
 
 // 4客户端错误, 5服务器错误,

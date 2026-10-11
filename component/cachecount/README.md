@@ -21,7 +21,7 @@
 ## 安装
 
 ```bash
-go get git.woa.com/th-go/toolbox/component/cachecount
+go get github.com/twbbb/toolbox
 ```
 
 ## 快速开始
@@ -31,7 +31,7 @@ package main
 
 import (
     "github.com/redis/go-redis/v9"
-    "git.woa.com/th-go/toolbox/component/cachecount"
+    "github.com/twbbb/toolbox/component/cachecount"
 )
 
 func main() {

@@ -8,8 +8,8 @@ import (
 	"net/url"
 	"strconv"
 
-	"git.code.oa.com/trpc-go/trpc-go/log"
-	"git.woa.com/th-go/toolbox/component/aesutil"
+	"github.com/twbbb/toolbox/component/aesutil"
+	"trpc.group/trpc-go/trpc-go/log"
 )
 
 // ReportInfo 报告信息结构体

@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"git.code.oa.com/trpc-go/trpc-go/errs"
+	"trpc.group/trpc-go/trpc-go/errs"
 )
 
 type BizErrType int

@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"git.woa.com/th-go/toolbox/component/bloom/bitset"
 	"github.com/redis/go-redis/v9"
+	"github.com/twbbb/toolbox/component/bloom/bitset"
 )
 
 // GetBloom 获取并初始化bloom过滤器，如果不存在则创建.dataSize 数据大小，float 误差率

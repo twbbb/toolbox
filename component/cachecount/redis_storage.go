@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"git.code.oa.com/trpc-go/trpc-go/log"
 	"github.com/redis/go-redis/v9"
+	"trpc.group/trpc-go/trpc-go/log"
 )
 
 // RedisStorage Redis存储操作结构体

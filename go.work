@@ -1,0 +1,18 @@
+go 1.23.4
+
+use (
+	./bus/ocr
+	./bus/org
+	./bus/reportmgr
+	./comimport
+	./component/aesutil
+	./component/bloom
+	./component/cachecount
+	./component/redislock
+	./errcode
+	./filter/httpproxy
+	./filter/logcontext
+	./rainbowconfig
+	./trpcutil
+	./util
+)

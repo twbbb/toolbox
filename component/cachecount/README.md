@@ -21,7 +21,7 @@
 ## 安装
 
 ```bash
-go get github.com/twbbb/toolbox
+go get github.com/twbbb/toolbox/component/cachecount
 ```
 
 ## 快速开始

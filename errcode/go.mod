@@ -5,6 +5,8 @@ go 1.20
 require trpc.group/trpc-go/trpc-go v1.1.0
 
 require (
+	github.com/google/go-cmp v0.5.9 // indirect
+	github.com/stretchr/testify v1.8.4 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
 	trpc.group/trpc/trpc-protocol/pb/go/trpc v1.0.0 // indirect
 )

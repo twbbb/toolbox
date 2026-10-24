@@ -26,13 +26,13 @@ func ListenForSIGTERM(ctx context.Context, cancel context.CancelFunc, callback f
 	signal.Notify(sigs, syscall.SIGTERM)
 
 	go func() {
+		defer signal.Stop(sigs)
 		select {
 		case <-sigs:
 			callback() // 调用传入的回调函数
 			cancel()   // 在接收到 SIGTERM 信号时取消上下文
-			return
 		case <-ctx.Done():
-			return // 如果主上下文被取消，也停止此 goroutine
+			// 如果主上下文被取消，也停止此 goroutine
 		}
 	}()
 }

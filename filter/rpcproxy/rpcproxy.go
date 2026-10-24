@@ -40,6 +40,7 @@ type Config struct {
 	Enable        bool   `yaml:"enable"`        // 是否启用缓存，默认关，显式配 true 才生效
 	LocalFilePath string `yaml:"localFilePath"` // 请求和结果缓存目录，空则不缓存
 	Force         bool   `yaml:"force"`         // true 时不读缓存，调用后仍写缓存
+	ReadOnly      bool   `yaml:"readOnly"`      // true 时只读不写：本地用例只放替身，没命中的照常真实调用
 	// NoCacheMethods 不走缓存的接口，每次都真实调用且不写缓存；
 	// 写方法名对所有服务生效，写 "服务名/方法名" 只对该服务生效
 	NoCacheMethods []string `yaml:"noCacheMethods"`
@@ -79,7 +80,7 @@ func clientFilter(ctx context.Context, req, rsp interface{}, next filter.ClientH
 		log.ErrorContextf(ctx, "rpcproxy cache|marshal req fail, skip cache|%s|%s|%v", serviceName, method, err)
 		return next(ctx, req, rsp)
 	}
-	file := cacheFile(ctx, &arg, serviceName, method, reqJSON, msg.ClientMetaData())
+	file := cacheFile(ctx, &arg, serviceName, method, cacheKey(reqJSON, msg.ClientMetaData()))
 	if data, ok := readCache(ctx, &arg, file); ok {
 		if err := json.Unmarshal(data, rsp); err != nil {
 			log.ErrorContextf(ctx, "rpcproxy cache|rsp unmarshal fail, ignore|%s|%v", file, err)
@@ -127,9 +128,7 @@ type cacheEntry struct {
 }
 
 // cacheFile LocalFilePath 为空或接口配置为不缓存时返回空路径，表示不缓存
-func cacheFile(
-	ctx context.Context, arg *Config, serviceName, method string, reqJSON []byte, md codec.MetaData,
-) string {
+func cacheFile(ctx context.Context, arg *Config, serviceName, method, key string) string {
 	if arg.LocalFilePath == "" {
 		return ""
 	}
@@ -137,7 +136,7 @@ func cacheFile(
 		log.InfoContextf(ctx, "rpcproxy cache|disabled by noCacheMethods|%s/%s", serviceName, method)
 		return ""
 	}
-	return filepath.Join(arg.LocalFilePath, serviceName+"."+method+"_"+cacheKey(reqJSON, md)+".json")
+	return filepath.Join(arg.LocalFilePath, serviceName+"."+method+"_"+key+".json")
 }
 
 // isNoCache 配置项为方法名时匹配所有服务，为 "服务名/方法名" 时只匹配该服务
@@ -175,7 +174,7 @@ func readCache(ctx context.Context, arg *Config, file string) ([]byte, bool) {
 }
 
 func writeCache(ctx context.Context, arg *Config, file string, reqJSON, rspJSON []byte) {
-	if file == "" {
+	if file == "" || arg.ReadOnly {
 		return
 	}
 	data, err := json.MarshalIndent(&cacheEntry{Req: reqJSON, Rsp: rspJSON}, "", "  ")
@@ -197,14 +196,19 @@ func writeCache(ctx context.Context, arg *Config, file string, reqJSON, rspJSON 
 // cacheKey 去掉每次都会变的签名字段后，连同用户身份 metadata 取 md5；
 // 下游按 metadata 里的 sthid 等识别用户，不带上会让不同用户命中同一份缓存
 func cacheKey(reqJSON []byte, md codec.MetaData) string {
-	s := string(reqJSON)
-	for _, re := range cacheKeyIgnoreRegs {
-		s = re.ReplaceAllString(s, `$1$2$3`)
-	}
+	s := stripIgnored(string(reqJSON))
 	for _, k := range cacheKeyMetaKeys {
 		if v, ok := md[k]; ok {
 			s += "|" + k + "=" + string(v)
 		}
 	}
 	return fmt.Sprintf("%x", md5.Sum([]byte(s)))
+}
+
+// stripIgnored 去掉 JSON 里 nonce、timestamp、signature 的值
+func stripIgnored(s string) string {
+	for _, re := range cacheKeyIgnoreRegs {
+		s = re.ReplaceAllString(s, `$1$2$3`)
+	}
+	return s
 }

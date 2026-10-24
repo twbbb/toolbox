@@ -46,6 +46,7 @@ rpcProxyArg:
   enable: true          # 必须显式开启
   localFilePath: /Users/.../th_jingqi_server/localstart/rpcproxy_cache   # 缓存目录，空则不缓存；用绝对路径
   force: false          # true：所有接口都不读缓存，调用后仍写缓存
+  readOnly: false       # true：只读不写。本地用例用：缓存目录里只有用例写的替身，没命中的照常真实调用
   noCacheMethods:       # 这些接口不读也不写缓存，每次都真实调用
     - GetMemberList
     - trpc.a.b.S/GetMemberInfo
@@ -56,6 +57,16 @@ rpcProxyArg:
 缓存目录放在 `.gitignore` 里（`/localstart/rpcproxy_cache/`）。缓存里是下游返回的数据，不要提交。
 
 改完配置要重启服务：`./localstart/startserver.sh restart`。改缓存文件本身不用重启。
+
+### HTTP 下游
+
+用 `net/http` 直接调的外部接口（如微信），构造 `http.Client` 时套一层 `Transport`，和 trpc 版共用同一份 `SetConfig` 配置、缓存目录和日志：
+
+```go
+client := &http.Client{Timeout: 5 * time.Second, Transport: rpcproxy.Transport(nil)} // nil 用 http.DefaultTransport
+```
+
+`DOCKER_ENV` 非空时 `Transport` 直接返回传入的 base，线上不生效。HTTP 版没有用户身份 metadata；只要调用本身没出错就写缓存，HTTP 状态码不是 2xx 也照常写。
 
 ## 3. 缓存文件
 
@@ -68,6 +79,13 @@ rpcProxyArg:
 
 方法名用 proto 里的方法名。`noCacheMethods` 也按这个写法填。
 
+HTTP 下游的服务名是 `http.<host>`，方法名是 path 去掉首尾 `/` 后把 `/` 换成 `_`：
+
+```
+http.api.weixin.qq.com.cgi-bin_stable_token_<md5>.json
+noCacheMethods: [cgi-bin_stable_token]  或  [http.api.weixin.qq.com/cgi-bin_stable_token]
+```
+
 ### 文件内容
 
 请求和结果放在同一个文件：
@@ -79,6 +97,17 @@ rpcProxyArg:
 }
 ```
 
+HTTP 下游的文件内容：
+
+```json
+{
+  "req": {"method": "POST", "url": "https://api.weixin.qq.com/cgi-bin/stable_token", "body": {...}},
+  "rsp": {"status": 200, "header": {"Content-Type": "application/json"}, "body": {...}}
+}
+```
+
+body 是 JSON 时原样放在 `body`，不是 JSON 时放在 `bodyText` 字符串里。手写替身时 `rsp` 只写 `body` 也行，`status` 缺省为 200。
+
 命中缓存时只用 `rsp`。改 `rsp` 就是改下游返回值。
 
 `req` 只用来查看。改它不影响命中，因为文件名在写入时就已经算好了。
@@ -89,6 +118,8 @@ md5 由两部分组成：
 
 1. 请求 JSON，去掉 `nonce`、`timestamp`、`signature` 这几个每次都会变的字段。
 2. 用户身份 metadata：`sthid`、`openId`、`userId`、`HCUnionId`、`soid`。
+
+HTTP 下游的 md5 由 method、host、path、query（去掉 `nonce`、`timestamp`、`signature`，按参数名排序）和 body（同样去掉这三个字段）组成。`access_token` 这类参数参与 key：同一个接口带旧 token 和新 token 命中不同的文件，可以分别写替身。
 
 所以：
 
@@ -138,6 +169,22 @@ grep "rpcproxy cache" localstart/log/trpc.log | tail
 
 清空缓存目录：`rm localstart/rpcproxy_cache/*.json`。也可以临时开 `force: true` 跑一遍，跑完关掉。`force` 期间仍会写缓存，所以跑一遍之后缓存就是最新的。
 
+### 本地用例写替身
+
+本地用例开 `readOnly: true`，缓存目录里只放用例自己写的替身：外部下游命中替身，兄弟服务没有替身就真实调用，也不会被写进缓存。替身文件名用和 filter 同一份算法算，一定命中：
+
+```go
+// trpc 下游：被调服务名、方法名、被测服务发出的请求、用户身份 metadata
+file, _ := rpcproxy.StubFile(dir, "trpc.common.auth.Auth", "Login", req, nil)
+_ = rpcproxy.WriteStub(file, req, rsp)
+
+// HTTP 下游：method、带 query 的 URL、请求体
+file, _ = rpcproxy.HTTPStubFile(dir, "POST", "https://api.weixin.qq.com/cgi-bin/stable_token", body)
+_ = rpcproxy.WriteStub(file, &rpcproxy.HTTPReq{Method: "POST", URL: u}, &rpcproxy.HTTPRsp{Body: json.RawMessage(`{"errcode":0}`)})
+```
+
+日志出现 `cache|hit|<该文件>`，说明被测服务实际发出的请求和写替身时给的请求一致。
+
 ## 6. 排查
 
 | 现象 | 原因 |
@@ -149,3 +196,7 @@ grep "rpcproxy cache" localstart/log/trpc.log | tail
 ## 7. 代码位置
 
 `rpcproxy.go`：配置、filter 入口、缓存读写、缓存 key。
+
+`http.go`：HTTP 下游的 `Transport`、缓存 key、响应拼装。
+
+`stub.go`：本地用例写替身用的 `StubFile`、`HTTPStubFile`、`WriteStub`。

@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/robfig/cron/v3 v3.0.1
-	github.com/twbbb/toolbox/util v0.2.0
+	github.com/twbbb/toolbox/util v0.2.1
 	trpc.group/trpc-go/trpc-go v1.1.0
 )
 

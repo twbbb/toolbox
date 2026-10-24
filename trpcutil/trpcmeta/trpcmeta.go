@@ -3,6 +3,7 @@ package trpcmeta
 
 import (
 	"context"
+	"strconv"
 
 	"trpc.group/trpc-go/trpc-go"
 )
@@ -35,6 +36,26 @@ func GetSthid(ctx context.Context) string {
 // GetRequestId 从context中获取requestId
 func GetRequestId(ctx context.Context) string {
 	return getStrFromCtx(ctx, "requestId")
+}
+
+// GetUid 从context中获取网关透传的uid，没有或不合法时返回0
+func GetUid(ctx context.Context) uint64 {
+	return getUintFromCtx(ctx, "uid")
+}
+
+// GetApp 从context中获取网关透传的app
+func GetApp(ctx context.Context) string {
+	return getStrFromCtx(ctx, "app")
+}
+
+// GetCid 从context中获取网关透传的cid，没有或不合法时返回0
+func GetCid(ctx context.Context) uint64 {
+	return getUintFromCtx(ctx, "cid")
+}
+
+// GetClientIp 从context中获取网关透传的clientIp
+func GetClientIp(ctx context.Context) string {
+	return getStrFromCtx(ctx, "clientIp")
 }
 
 // GetSubBusinessid 从context中获取GetSubBusinessid
@@ -88,4 +109,12 @@ func getStrFromCtx(ctx context.Context, label string) string {
 		return string(value)
 	}
 	return ""
+}
+
+func getUintFromCtx(ctx context.Context, label string) uint64 {
+	v, err := strconv.ParseUint(getStrFromCtx(ctx, label), 10, 64)
+	if err != nil {
+		return 0
+	}
+	return v
 }

@@ -8,11 +8,16 @@ import (
 	"trpc.group/trpc-go/trpc-go/errs"
 )
 
+// BizErrType 业务类型，错误码 = 4客户端/5服务端 + 三位业务类型 + 三位编号。
+// 分段：1～99 common_server 平台服务，100 起业务。
 type BizErrType int
 
 const (
-	MATHGAME BizErrType = 1 // 数学游戏
-
+	GATEWAY  BizErrType = 1   // 网关
+	AUTH     BizErrType = 2   // 登录
+	WXTOKEN  BizErrType = 3   // 微信凭证
+	BizStart BizErrType = 100 // 业务起始
+	MATHGAME BizErrType = 100 // 数学游戏
 )
 
 // GetBizErr 获取错误

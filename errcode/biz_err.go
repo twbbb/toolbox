@@ -16,7 +16,6 @@ const (
 	GATEWAY  BizErrType = 1   // 网关
 	AUTH     BizErrType = 2   // 登录
 	WXTOKEN  BizErrType = 3   // 微信凭证
-	BizStart BizErrType = 100 // 业务起始
 	MATHGAME BizErrType = 100 // 数学游戏
 )
 

@@ -43,7 +43,7 @@ func TestGatewayIdentityMissing(t *testing.T) {
 	for name, ctx := range map[string]context.Context{
 		"no message":    context.Background(),
 		"empty meta":    ctxWithMeta(codec.MetaData{}),
-		"bad uid & cid": ctxWithMeta(codec.MetaData{"uid": []byte("abc"), "cid": []byte("")}),
+		"bad uid & cid": ctxWithMeta(codec.MetaData{"uid": []byte("abc"), "cid": []byte("-1")}),
 	} {
 		t.Run(name, func(t *testing.T) {
 			if got := GetUid(ctx); got != 0 {

@@ -10,18 +10,18 @@ func codeOf(t *testing.T, bizType BizErrType, client bool, code int) int {
 	t.Helper()
 	be := GetBizErr(bizType)
 	if client {
-		_ = be.AddBizErrClient(code, "x")
+		if err := be.AddBizErrClient(code, "x"); err != nil {
+			t.Fatalf("AddBizErrClient: %v", err)
+		}
 		return int(errs.Code(be.GetBizErrClient(code)))
 	}
-	_ = be.AddBizErrServer(code, "x")
+	if err := be.AddBizErrServer(code, "x"); err != nil {
+		t.Fatalf("AddBizErrServer: %v", err)
+	}
 	return int(errs.Code(be.GetBizErrServer(code)))
 }
 
 func TestBizErrSegments(t *testing.T) {
-	if !(GATEWAY < AUTH && AUTH < WXTOKEN && WXTOKEN < BizStart) {
-		t.Fatalf("segments overlap: gateway=%d auth=%d wxtoken=%d biz=%d", GATEWAY, AUTH, WXTOKEN, BizStart)
-	}
-
 	cases := []struct {
 		bizType BizErrType
 		client  bool
@@ -32,7 +32,6 @@ func TestBizErrSegments(t *testing.T) {
 		{GATEWAY, false, 999, 5001999},
 		{AUTH, true, 1, 4002001},
 		{WXTOKEN, false, 1, 5003001},
-		{BizStart, true, 1, 4100001},
 		{MATHGAME, true, 1, 4100001},
 	}
 	for _, c := range cases {

@@ -17,18 +17,10 @@ func logContext() filter.ServerFilter {
 		if requestId != "" {
 			log.WithContextFields(ctx, "requestId", requestId)
 		}
-		if sthid != "" {
-			log.WithContextFields(ctx, "sthid", sthid)
-		}
 
 		bizCheckInf, ok := req.(BizIdInf)
 		if ok {
 			log.WithContextFields(ctx, "bizId", bizCheckInf.GetBizId())
-		}
-
-		patientIdInf, ok := req.(PatientIdInf)
-		if ok {
-			log.WithContextFields(ctx, "patientId", patientIdInf.GetPatientId())
 		}
 
 		return handler(ctx, req)

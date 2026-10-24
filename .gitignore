@@ -5,3 +5,13 @@
 /.idea/watcherTasks.xml
 /main.go
 .idea
+# 临时文件放 tmp/，不提交
+/tmp/**
+!/tmp/.gitkeep
+# 调试截图放 shots/，图片不提交
+/shots/**/*.png
+/shots/**/*.jpg
+/shots/**/*.jpeg
+/shots/**/*.webp
+/shots/**/*.gif
+/shots/**/__pycache__/

@@ -48,7 +48,7 @@ type HTTPReq struct {
 
 // HTTPRsp HTTP 下游缓存文件里的 rsp，命中时按它返回；手写替身时 Status 缺省为 200
 type HTTPRsp struct {
-	Status   int               `json:"status"`
+	Status   int               `json:"status,omitempty"` // 缺省 200
 	Header   map[string]string `json:"header,omitempty"`
 	Body     json.RawMessage   `json:"body,omitempty"`     // 响应体是 JSON 时原样放这里
 	BodyText string            `json:"bodyText,omitempty"` // 不是 JSON 时放这里

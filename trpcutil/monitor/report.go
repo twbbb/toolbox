@@ -28,9 +28,7 @@ func ReportData(ctx context.Context, dims []*metrics.Dimension, name string, isE
 		datas = append(datas, metrics.NewMetrics("failCount", 0, metrics.PolicySUM))
 	}
 
-	datas = append(datas, metrics.NewMetrics("allCost", float64(costTms), metrics.PolicySUM))
-	datas = append(datas, metrics.NewMetrics("avgCost", float64(costTms), metrics.PolicyAVG))
-	datas = append(datas, metrics.NewMetrics("maxCost", float64(costTms), metrics.PolicyMAX))
+	datas = appendCost(datas, name, costTms)
 
 	rec := metrics.NewMultiDimensionMetricsX(name, dims, datas)
 

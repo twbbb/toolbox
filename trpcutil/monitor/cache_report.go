@@ -7,6 +7,21 @@ import (
 	"trpc.group/trpc-go/trpc-go/metrics"
 )
 
+// costBounds 耗时分桶，单位秒，和 task.getUseTime 一致。
+// Prometheus 插件收下 SUM、SET、Histogram。耗时用直方图，均值取 cost 的 _sum/_count。
+var costBounds = metrics.NewValueBounds(0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5, 10, 30)
+
+func appendCost(datas []*metrics.Metrics, reportName string, costSec float64) []*metrics.Metrics {
+	datas = append(datas, metrics.NewMetrics("allCost", costSec, metrics.PolicySUM))
+	histName := "cost"
+	if reportName != "" {
+		histName = reportName + "_cost"
+	}
+	// 分桶要在第一次 Observe 之前登记，sink 创建 Histogram 时按这个名字取。
+	metrics.Histogram(histName, costBounds)
+	return append(datas, metrics.NewMetrics("cost", costSec, metrics.PolicyHistogram))
+}
+
 // ReportCache ...
 func ReportCache(requestId string, reportName string, biz string, suc bool, costTms float64) {
 
@@ -24,9 +39,7 @@ func ReportCache(requestId string, reportName string, biz string, suc bool, cost
 		datas = append(datas, metrics.NewMetrics("failCount", 0, metrics.PolicySUM))
 	}
 
-	datas = append(datas, metrics.NewMetrics("allCost", costTms, metrics.PolicySUM))
-	datas = append(datas, metrics.NewMetrics("avgCost", costTms, metrics.PolicyAVG))
-	datas = append(datas, metrics.NewMetrics("maxCost", costTms, metrics.PolicyMAX))
+	datas = appendCost(datas, reportName, costTms)
 
 	rec := metrics.NewMultiDimensionMetricsX(reportName, dims, datas)
 
@@ -40,8 +53,8 @@ func ReportCache(requestId string, reportName string, biz string, suc bool, cost
 
 func ReportPlatformTask(funcName string, suc bool, costTms float64, cornTime string) {
 	dims := make([]*metrics.Dimension, 0, 5)
-	dims = append(dims, &metrics.Dimension{Name: "env", Value: trpc.GlobalConfig().Global.EnvName})
-	dims = append(dims, &metrics.Dimension{Name: "srcContain", Value: trpc.GlobalConfig().Global.ContainerName})
+	dims = append(dims, &metrics.Dimension{Name: "app", Value: trpc.GlobalConfig().Server.App})
+	dims = append(dims, &metrics.Dimension{Name: "server", Value: trpc.GlobalConfig().Server.Server})
 	dims = append(dims, &metrics.Dimension{Name: "srcIP", Value: trpc.GlobalConfig().Global.LocalIP})
 	dims = append(dims, &metrics.Dimension{Name: "funName", Value: funcName})
 	dims = append(dims, &metrics.Dimension{Name: "cornTime", Value: cornTime})
@@ -54,9 +67,7 @@ func ReportPlatformTask(funcName string, suc bool, costTms float64, cornTime str
 		datas = append(datas, metrics.NewMetrics("failCount", 0, metrics.PolicySUM))
 	}
 
-	datas = append(datas, metrics.NewMetrics("allCost", costTms, metrics.PolicySUM))
-	datas = append(datas, metrics.NewMetrics("avgCost", costTms, metrics.PolicyAVG))
-	datas = append(datas, metrics.NewMetrics("maxCost", costTms, metrics.PolicyMAX))
+	datas = appendCost(datas, "task", costTms)
 
 	rec := metrics.NewMultiDimensionMetricsX("task", dims, datas)
 

@@ -13,7 +13,6 @@ import (
 func logContext() filter.ServerFilter {
 	return func(ctx context.Context, req interface{}, handler filter.ServerHandleFunc) (rsp interface{}, err error) {
 		requestId := trpcmeta.GetRequestId(ctx)
-		sthid := trpcmeta.GetSthid(ctx)
 		if requestId != "" {
 			log.WithContextFields(ctx, "requestId", requestId)
 		}

@@ -17,32 +17,45 @@ import (
 	"trpc.group/trpc-go/trpc-go/log"
 )
 
-// InitTaskTickerEnv 初始定时任务，包含env
-func InitTaskTickerEnv(
+// buildBaseLockKey 构造定时任务锁 key 前缀，格式为 app:server:，app 或 server 未配置时返回错误
+func buildBaseLockKey() (string, error) {
+	if trpc.GlobalConfig() == nil {
+		return "", errors.New("task: trpc global config is nil")
+	}
+	app := trpc.GlobalConfig().Server.App
+	server := trpc.GlobalConfig().Server.Server
+	if app == "" || server == "" {
+		return "", fmt.Errorf("task: server.app and server.server must be set, got app=%q server=%q", app, server)
+	}
+	return app + ":" + server + ":", nil
+}
+
+// InitTaskTicker 初始定时任务，包含env
+func InitTaskTicker(
 	runFunc func(ctx context.Context) error, taskName string, secondDuration int,
 	lock entity.DistributLock,
 ) error {
-	baseLockKey := ""
-	if trpc.GlobalConfig() != nil {
-		if trpc.GlobalConfig().Server.Server != "" {
-			baseLockKey = trpc.GlobalConfig().Server.Server + ":"
-		} else {
-			baseLockKey = "task:"
-		}
-		if trpc.GlobalConfig().Global.EnvName != "" {
-			baseLockKey = baseLockKey + trpc.GlobalConfig().Global.EnvName + ":"
-		}
+	baseLockKey, err := buildBaseLockKey()
+	if err != nil {
+		return err
 	}
-
-	if baseLockKey == "" {
-		baseLockKey = "task:"
-	}
-
-	return InitTaskTicker(runFunc, taskName, secondDuration, baseLockKey, lock)
+	return InitTaskTickerByKey(runFunc, taskName, secondDuration, baseLockKey, lock)
 }
 
-// InitTaskTicker 初始定时任务
-func InitTaskTicker(
+// InitTaskTickerCron 初始定时任务，包含env，支持 cron 表达式
+func InitTaskTickerCron(
+	runFunc func(ctx context.Context) error, taskName string, cronExpr string,
+	lock entity.DistributLock,
+) error {
+	baseLockKey, err := buildBaseLockKey()
+	if err != nil {
+		return err
+	}
+	return InitTaskTickerCronByKey(runFunc, taskName, cronExpr, baseLockKey, lock)
+}
+
+// InitTaskTickerByKey 初始定时任务
+func InitTaskTickerByKey(
 	runFunc func(ctx context.Context) error, taskName string, secondDuration int, baseLockKey string,
 	lock entity.DistributLock,
 ) error {
@@ -50,32 +63,8 @@ func InitTaskTicker(
 	return DoDistributTask(taskFunc)
 }
 
-// InitTaskTickerEnvWithCron 初始定时任务，包含env，支持 cron 表达式
-func InitTaskTickerEnvWithCron(
-	runFunc func(ctx context.Context) error, taskName string, cronExpr string,
-	lock entity.DistributLock,
-) error {
-	baseLockKey := ""
-	if trpc.GlobalConfig() != nil {
-		if trpc.GlobalConfig().Server.Server != "" {
-			baseLockKey = trpc.GlobalConfig().Server.Server + ":"
-		} else {
-			baseLockKey = "task:"
-		}
-		if trpc.GlobalConfig().Global.EnvName != "" {
-			baseLockKey = baseLockKey + trpc.GlobalConfig().Global.EnvName + ":"
-		}
-	}
-
-	if baseLockKey == "" {
-		baseLockKey = "task:"
-	}
-
-	return InitTaskTickerWithCron(runFunc, taskName, cronExpr, baseLockKey, lock)
-}
-
-// InitTaskTickerWithCron 初始定时任务，支持 cron 表达式
-func InitTaskTickerWithCron(
+// InitTaskTickerCronByKey 初始定时任务，支持 cron 表达式
+func InitTaskTickerCronByKey(
 	runFunc func(ctx context.Context) error, taskName string, cronExpr string, baseLockKey string,
 	lock entity.DistributLock,
 ) error {
@@ -126,20 +115,22 @@ func doDistributTaskByCron(taskFunc entity.TaskDistributFunc) error {
 	runTimes := 0
 	var isRunning bool
 
-	_, err := c.AddFunc(taskFunc.CronExpr, func() {
-		runTimes++
-		if runTimes >= math.MaxInt32 {
-			runTimes = 1
-		}
-		requestId := fmt.Sprintf("%s_%d", taskFunc.TaskName, runTimes)
-		if isRunning {
-			log.Info("task is running：%s", requestId)
-			return
-		}
-		isRunning = true
-		runDistributProcess(taskFunc, requestId)
-		isRunning = false
-	})
+	_, err := c.AddFunc(
+		taskFunc.CronExpr, func() {
+			runTimes++
+			if runTimes >= math.MaxInt32 {
+				runTimes = 1
+			}
+			requestId := fmt.Sprintf("%s_%d", taskFunc.TaskName, runTimes)
+			if isRunning {
+				log.Info("task is running：%s", requestId)
+				return
+			}
+			isRunning = true
+			runDistributProcess(taskFunc, requestId)
+			isRunning = false
+		},
+	)
 	if err != nil {
 		return fmt.Errorf("cron expr invalid [%s]: %w", taskFunc.CronExpr, err)
 	}

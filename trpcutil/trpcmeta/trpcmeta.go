@@ -53,6 +53,11 @@ func GetCid(ctx context.Context) uint64 {
 	return getUintFromCtx(ctx, "cid")
 }
 
+// GetUserkey 从 context 中获取网关透传的 userkey（t_user.f_userkey：openid / 用户名 / 谷歌编号）
+func GetUserkey(ctx context.Context) string {
+	return CommonGet(ctx, []string{"userkey"})
+}
+
 // GetClientIp 从context中获取网关透传的clientIp
 func GetClientIp(ctx context.Context) string {
 	return getStrFromCtx(ctx, "clientIp")

@@ -1,0 +1,51 @@
+# 公开和只读仓库共用的 gitleaks 规则：默认规则加上内网、本机路径、公司标识。
+# 本人的具体值（公网 IP、云账号 ID、域名等）不写这里，放 05_密码证书/扫描词表.txt，由 scan.sh 合进来。
+title = "code_knowledge share rules"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "internal-ipv4"
+description = "内网 IP"
+regex = '''\b(?:10\.\d{1,3}|172\.(?:1[6-9]|2\d|3[01])|192\.168)\.\d{1,3}\.\d{1,3}\b'''
+keywords = ["10.", "172.", "192.168."]
+
+[[rules]]
+id = "public-ipv4"
+description = "公网 IP"
+regex = '''\b(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-5])(?:\.(?:\d{1,2}|1\d\d|2[0-4]\d|25[0-5])){3}\b'''
+[[rules.allowlists]]
+regexTarget = "match"
+regexes = [
+  '''^(?:127\.|0\.0\.0\.0|10\.|172\.(?:1[6-9]|2\d|3[01])\.|192\.168\.|255\.255\.|1\.1\.1\.1$|8\.8\.8\.8$|8\.8\.4\.4$|1\.0\.0\.1$|169\.254\.|192\.0\.2\.|198\.51\.100\.|203\.0\.113\.)''',
+]
+[[rules.allowlists]]
+paths = ['''go\.sum$''', '''package-lock\.json$''', '''pnpm-lock\.yaml$''', '''yarn\.lock$''']
+
+[[rules]]
+id = "user-home-path"
+description = "本机用户目录"
+regex = '''/Users/[A-Za-z0-9._-]+/'''
+keywords = ["/users/"]
+[[rules.allowlists]]
+regexTarget = "match"
+regexes = ['''^/Users/(?:me|you|xxx|name|user|username|example|demo|Shared)/$''']
+
+[[rules]]
+id = "company-git"
+description = "公司 git 地址"
+regex = '''git\.woa\.com'''
+keywords = ["git.woa.com"]
+
+[[rules]]
+id = "company-proto"
+description = "公司业务标识"
+regex = '''(?i)tencent_health'''
+keywords = ["tencent_health"]
+
+[[rules]]
+id = "sthid"
+description = "真实 sthid"
+regex = '''@[A-Za-z0-9]{30,40}\b'''
+keywords = ["@"]

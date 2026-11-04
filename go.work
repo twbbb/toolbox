@@ -1,0 +1,14 @@
+go 1.23.4
+
+use (
+	./bus/reportmgr
+	./component/aesutil
+	./component/bloom
+	./component/cachecount
+	./component/redislock
+	./errcode
+	./filter/logcontext
+	./filter/rpcproxy
+	./trpcutil
+	./util
+)

@@ -18,6 +18,7 @@ const (
 	WXTOKEN    BizErrType = 3   // 微信凭证
 	MATHGAME   BizErrType = 100 // 数学游戏
 	BABYGROWTH BizErrType = 101 // 宝宝成长记录
+	BABYVISION BizErrType = 102 // 宝宝视力本
 )
 
 // GetBizErr 获取错误

@@ -34,6 +34,8 @@ func TestBizErrSegments(t *testing.T) {
 		{WXTOKEN, false, 1, 5003001},
 		{MATHGAME, true, 1, 4100001},
 		{BABYGROWTH, false, 1, 5101001},
+		{BABYVISION, true, 1, 4102001},
+		{BABYVISION, false, 1, 5102001},
 	}
 	for _, c := range cases {
 		if got := codeOf(t, c.bizType, c.client, c.code); got != c.want {

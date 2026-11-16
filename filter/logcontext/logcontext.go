@@ -3,37 +3,28 @@ package logcontext
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/twbbb/toolbox/trpcutil/trpcmeta"
 	"trpc.group/trpc-go/trpc-go/filter"
 	"trpc.group/trpc-go/trpc-go/log"
 )
 
-// ServerFilter 被调拦截器的实现
+// logContext 被调拦截器的实现
 func logContext() filter.ServerFilter {
 	return func(ctx context.Context, req interface{}, handler filter.ServerHandleFunc) (rsp interface{}, err error) {
-		requestId := trpcmeta.GetRequestId(ctx)
-		if requestId != "" {
-			log.WithContextFields(ctx, "requestId", requestId)
+		if requestID := trpcmeta.GetRequestId(ctx); requestID != "" {
+			ctx = log.WithContextFields(ctx, "requestId", requestID)
 		}
-
-		bizCheckInf, ok := req.(BizIdInf)
-		if ok {
-			log.WithContextFields(ctx, "bizId", bizCheckInf.GetBizId())
+		if userkey := trpcmeta.GetUserkey(ctx); userkey != "" {
+			ctx = log.WithContextFields(ctx, "userkey", userkey)
+		}
+		if cid := trpcmeta.GetCid(ctx); cid != 0 {
+			ctx = log.WithContextFields(ctx, "cid", strconv.FormatUint(cid, 10))
 		}
 
 		return handler(ctx, req)
 	}
-}
-
-// BizIdInf 定义一个接口
-type BizIdInf interface {
-	GetBizId() string
-}
-
-// PatientIdInf 定义一个接口
-type PatientIdInf interface {
-	GetPatientId() string
 }
 
 func init() {

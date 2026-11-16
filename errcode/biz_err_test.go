@@ -32,6 +32,8 @@ func TestBizErrSegments(t *testing.T) {
 		{GATEWAY, false, 999, 5001999},
 		{AUTH, true, 1, 4002001},
 		{WXTOKEN, false, 1, 5003001},
+		{EVENTLOG, true, 1, 4004001},
+		{EVENTLOG, false, 1, 5004001},
 		{MATHGAME, true, 1, 4100001},
 		{BABYGROWTH, false, 1, 5101001},
 		{BABYVISION, true, 1, 4102001},

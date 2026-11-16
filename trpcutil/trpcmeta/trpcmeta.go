@@ -13,9 +13,9 @@ func GetOpenID(ctx context.Context) string {
 	return getStrFromCtx(ctx, "openId")
 }
 
-// GetUserID 从context中获取userID
+// GetUserID 从 context 中获取用户对外编号，优先读取网关透传的 userid，兼容历史 userId
 func GetUserID(ctx context.Context) string {
-	return getStrFromCtx(ctx, "userId")
+	return CommonGet(ctx, []string{"userid", "userId"})
 }
 
 // GetHCUnionId 从context中获取HCUnionId

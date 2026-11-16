@@ -36,6 +36,8 @@ func TestBizErrSegments(t *testing.T) {
 		{BABYGROWTH, false, 1, 5101001},
 		{BABYVISION, true, 1, 4102001},
 		{BABYVISION, false, 1, 5102001},
+		{REVIEWBOOK, true, 1, 4103001},
+		{REVIEWBOOK, false, 1, 5103001},
 	}
 	for _, c := range cases {
 		if got := codeOf(t, c.bizType, c.client, c.code); got != c.want {

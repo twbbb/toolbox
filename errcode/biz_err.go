@@ -19,6 +19,7 @@ const (
 	MATHGAME   BizErrType = 100 // 数学游戏
 	BABYGROWTH BizErrType = 101 // 宝宝成长记录
 	BABYVISION BizErrType = 102 // 宝宝视力本
+	REVIEWBOOK BizErrType = 103 // 复盘成长本
 )
 
 // GetBizErr 获取错误

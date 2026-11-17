@@ -16,6 +16,7 @@ const (
 	GATEWAY    BizErrType = 1   // 网关
 	AUTH       BizErrType = 2   // 登录
 	WXTOKEN    BizErrType = 3   // 微信凭证
+	EVENTLOG   BizErrType = 4   // 事件日志
 	MATHGAME   BizErrType = 100 // 数学游戏
 	BABYGROWTH BizErrType = 101 // 宝宝成长记录
 	BABYVISION BizErrType = 102 // 宝宝视力本

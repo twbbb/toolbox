@@ -64,3 +64,54 @@ func TestGatewayIdentityMissing(t *testing.T) {
 		})
 	}
 }
+
+func TestGetUserID(testingT *testing.T) {
+	testCases := []struct {
+		name string
+		ctx  context.Context
+		want string
+	}{
+		{
+			name: "only userid",
+			ctx:  ctxWithMeta(codec.MetaData{"userid": []byte("user_lower")}),
+			want: "user_lower",
+		},
+		{
+			name: "only userId",
+			ctx:  ctxWithMeta(codec.MetaData{"userId": []byte("user_camel")}),
+			want: "user_camel",
+		},
+		{
+			name: "both userid and userId prefers userid",
+			ctx: ctxWithMeta(codec.MetaData{
+				"userid": []byte("user_lower"),
+				"userId": []byte("user_camel"),
+			}),
+			want: "user_lower",
+		},
+		{
+			name: "empty userid falls back to userId",
+			ctx: ctxWithMeta(codec.MetaData{
+				"userid": []byte(""),
+				"userId": []byte("user_camel"),
+			}),
+			want: "user_camel",
+		},
+		{
+			name: "missing both",
+			ctx:  ctxWithMeta(codec.MetaData{}),
+			want: "",
+		},
+		{
+			name: "no message in context",
+			ctx:  context.Background(),
+			want: "",
+		},
+	}
+
+	for _, testCase := range testCases {
+		if got := GetUserID(testCase.ctx); got != testCase.want {
+			testingT.Errorf("%s: GetUserID() = %q, want %q", testCase.name, got, testCase.want)
+		}
+	}
+}
